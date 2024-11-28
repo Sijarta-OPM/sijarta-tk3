@@ -225,6 +225,73 @@ def show_kategori_by_id(request, id):
             'data': subkategori_list,
         }, safe=False)
 
+def search_subkategori(request):
+    data = json.loads(request.body)
+
+    kategori_jasa = data.get('kategoriJasa', '')
+    subkategori_jasa = data.get('subkategoriJasa', '').strip()
+    
+    subkategori_jasa = f"%{subkategori_jasa}%"
+    with connection.cursor() as cursor:
+        if (not kategori_jasa):
+            cursor.execute(
+                '''
+                select 
+                    kj.id idkategori, 
+                    kj.namakategori namakategori,
+                    skj.id idsubkategori,
+                    skj.namasubkategori namasubkategori
+                from 
+                    public.kategori_jasa kj
+                join
+                    public.subkategori_jasa skj
+                on 
+                    kj.id = skj.kategorijasaid
+                '''
+            )
+        else:
+            cursor.execute(
+                '''
+                select 
+                    kj.id idkategori, 
+                    kj.namakategori namakategori,
+                    skj.id idsubkategori,
+                    skj.namasubkategori namasubkategori
+                from 
+                    public.kategori_jasa kj
+                join
+                    public.subkategori_jasa skj
+                on 
+                    kj.id = skj.kategorijasaid
+                where
+                    kj.namakategori like %s 
+                    and skj.namasubkategori ilike %s
+                
+                ''', [kategori_jasa, subkategori_jasa]
+            )
+
+        subkategori_jasa = dict()
+        
+        columns = [col[0] for col in cursor.description]
+        for subkategori in cursor.fetchall():
+            key = str(subkategori[0])
+            value = {}
+            for i in range(1,4):
+                value[str(columns[i])] = str(subkategori[i])
+            if key in subkategori_jasa:
+                try:
+                    subkategori_jasa[key] += [value]
+                except:
+                    print("not list appearantly")
+            else:
+                subkategori_jasa[key] = [(value)]
+        return JsonResponse({
+            'status': 'success',
+            'data' : subkategori_jasa,
+        }, safe=False
+        )
+
+        
 def show_subkategori_by_id(request, id):
     with connection.cursor() as cursor:
         cursor.execute("""
@@ -331,7 +398,7 @@ def view_pemesanan_jasa(request):
                     for pekerjaan in pekerjaan_tersedia:
                         if not subkategori_jasa or [pekerjaan[3],pekerjaan[4]] not in subkategori_jasa:
                             subkategori_jasa.append([str(pekerjaan[3]),str(pekerjaan[4]),str(pekerjaan[1])])
-                    
+
                     context['kategori_jasa'] = kategori_jasa
                     context['subkategori_jasa'] = subkategori_jasa
 
