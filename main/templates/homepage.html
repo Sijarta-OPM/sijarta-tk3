@@ -100,11 +100,10 @@
             });
 
             // Update display after changing kategori
-            fetchSubkategori();
         });
 
         // Add event listener to subkategori dropdown
-        subkategoriSelect.addEventListener('change', fetchSubkategori);
+        // subkategoriSelect.addEventListener('change', fetchSubkategori);
 
         // Search button functionality
         document.getElementById('search-button').addEventListener('click', fetchSubkategori);
@@ -165,9 +164,6 @@
             `;
             queryResult.insertAdjacentHTML('beforeend', cardHTML);
         }
-
-        // Initial load
-        fetchSubkategori();
     </script>
 {% else %}
     <p class="text-center py-4">Silahkan login terlebih dahulu</p>

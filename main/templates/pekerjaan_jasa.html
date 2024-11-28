@@ -1,30 +1,62 @@
 {%include 'base.html'%}
 {% block content %}
-<select name="kategori_jasa" id="kategori_jasa">
-    <option value="">semua kategori jasa</option>
-    {%for jasa in kategori_jasa%}
-    <option value="{{jasa.0}}">{{jasa.1}}</option>
-    {%endfor%}
-</select>
-<select name="subkategori_jasa" id="subkategori_jasa">
-    
-</select>
+<div id="filter_resoran">
+    <select name="kategori_jasa" id="kategori_jasa">
+        <option value="">semua kategori jasa</option>
+        {%for jasa in kategori_jasa%}
+        <option value="{{jasa.0}}">{{jasa.1}}</option>
+        {%endfor%}
+    </select>
+    <select name="subkategori_jasa" id="subkategori_jasa">
+        <option value="">semua subkategori jasa</option>
+        
+    </select>
+    <button id="search_kategori">
+        search
+    </button>
+</div>
+
 <script>
+    const selectkategori = document.getElementById('kategori_jasa');
     const selectSubkategori = document.getElementById('subkategori_jasa');
-    const subkategori_jasa = "{{subkategori_jasa}}"
-    let option_subkategori;
-    selectSubkategori.addEventListener('change', function() {
+    const searchButton = document.getElementById('search_kategori');
+    let subkategori_jasa = "{{subkategori_jasa}}"
+
+    // parse string of array to actual array
+    subkategori_jasa = subkategori_jasa.replace(/&#x27;/g, "'");
+    subkategori_jasa = subkategori_jasa.replace(/'/g, '"');
+    subkategori_jasa = JSON.parse(subkategori_jasa);
+
+    
+    selectkategori.addEventListener('change', function() {
+        // render all option associated with every select
+        let option_subkategori;
+        option_subkategori = document.createElement('option');
+        // reset the option
+        option_subkategori.value = "";
+
+        option_subkategori.textContent = "semua subkategori jasa";
+        selectSubkategori.innerHTML = "";
+        selectSubkategori.appendChild(option_subkategori);
+
         if (this.value){
             subkategori_jasa.forEach(element => {
                 if (element[2] == this.value){
                     option_subkategori = document.createElement('option');
                     option_subkategori.value = element[0];
                     option_subkategori.textContent = element[1];
-
                     selectSubkategori.appendChild(option_subkategori);
                 }
             });
         }
     });
+    // sent get request to 
+    searchButton.addEventListener('click', searchKategori);
+
+    function search_kategori(){
+
+    }
+
+    
 </script>
 {% endblock content %}

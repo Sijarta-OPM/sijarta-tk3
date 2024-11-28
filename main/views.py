@@ -325,11 +325,13 @@ def view_pemesanan_jasa(request):
                             kategori_jasa.append([pekerjaan[1], pekerjaan[2]])
 
                     # extract subkategori pekerjaan
+                    # instead of array, return json
+
                     subkategori_jasa = []
                     for pekerjaan in pekerjaan_tersedia:
                         if not subkategori_jasa or [pekerjaan[3],pekerjaan[4]] not in subkategori_jasa:
-                            subkategori_jasa.append([pekerjaan[3],pekerjaan[4],pekerjaan[1]])
-
+                            subkategori_jasa.append([str(pekerjaan[3]),str(pekerjaan[4]),str(pekerjaan[1])])
+                    
                     context['kategori_jasa'] = kategori_jasa
                     context['subkategori_jasa'] = subkategori_jasa
 
