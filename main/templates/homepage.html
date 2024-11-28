@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% if logged_in %}
+    <div class="min-h-screen bg-gray-50 p-8">
+        <div class="max-w-5xl mx-auto">
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h2 class="text-3xl text-center font-bold mb-6">Pencarian Jasa</h2>
+                
+                <div class="space-y-4">
+                    <!-- First Dropdown -->
+                    <div class="space-y-2">
+                        <label for="kategori-jasa" class="block text-sm font-medium text-gray-700">
+                            Kategori Jasa
+                        </label>
+                        <select
+                            id="kategori-jasa"
+                            name="kategori-jasa"
+                            class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        >
+                            <option value="">Semua Kategori</option>
+                            {% if kategori_jasa %}
+                                {% for kategori in kategori_jasa %}
+                                    <option value="{{ kategori.0 }}">{{ kategori.1 }}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <!-- Second Dropdown -->
+                    <div class="space-y-2">
+                        <label for="subkategori-jasa" class="block text-sm font-medium text-gray-700">
+                            Subkategori Jasa
+                        </label>
+                        <select
+                            id="subkategori-jasa"
+                            name="subkategori-jasa"
+                            class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        >
+                            <option value="">Semua Subkategori</option>
+                        </select>
+                    </div>
+
+                    <!-- Search Button -->
+                    <button 
+                        type="button" 
+                        id="search-button"
+                        class="w-full mt-4 px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <div id="queryResult" class="pt-6" data-url-pattern="{% url 'subkategori:show_subkategori' '00000000-0000-0000-0000-000000000000' %}">
+                <!-- Initial content will be loaded by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Convert Django template data to JavaScript object
+        const subkategoriData = {
+            {% for kategori, subkategoris in subkategori_jasa.items %}
+                "{{ kategori }}": [
+                    {% for subkat in subkategoris %}
+                        {
+                            id: "{{ subkat.0 }}",
+                            name: "{{ subkat.1 }}"
+                        }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ]{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
+
+        const kategoriSelect = document.getElementById('kategori-jasa');
+        const subkategoriSelect = document.getElementById('subkategori-jasa');
+        const queryResult = document.getElementById('queryResult');
+
+        // Add event listener to kategori dropdown
+        kategoriSelect.addEventListener('change', function() {
+            // Clear current options
+            subkategoriSelect.innerHTML = '<option value="">Semua Subkategori</option>';
+            
+            const selectedKategori = this.value;
+            if (!selectedKategori) {
+                fetchSubkategori();
+                return;
+            }
+
+            // Get subkategori options for selected kategori
+            const subkategoriList = subkategoriData[selectedKategori] || [];
+            
+            // Add new options
+            subkategoriList.forEach(subkat => {
+                const optionElement = document.createElement('option');
+                optionElement.value = subkat.id;
+                optionElement.textContent = subkat.name;
+                subkategoriSelect.appendChild(optionElement);
+            });
+
+            // Update display after changing kategori
+            fetchSubkategori();
+        });
+
+        // Add event listener to subkategori dropdown
+        subkategoriSelect.addEventListener('change', fetchSubkategori);
+
+        // Search button functionality
+        document.getElementById('search-button').addEventListener('click', fetchSubkategori);
+
+        function fetchSubkategori() {
+            const kategoriId = kategoriSelect.value;
+            const subkategoriId = subkategoriSelect.value;
+            
+            // Clear existing content
+            queryResult.innerHTML = '';
+            
+            if (!kategoriId) {
+                // Show everything - all categories and their subcategories
+                Object.entries(subkategoriData).forEach(([katId, subkategories]) => {
+                    const kategoriName = getKategoriName(katId);
+                    renderKategoriCard(katId, kategoriName, subkategories);
+                });
+            } 
+            else if (kategoriId && !subkategoriId) {
+                // Show only selected category and all its subcategories
+                const subkategories = subkategoriData[kategoriId];
+                const kategoriName = getKategoriName(kategoriId);
+                if (subkategories) {
+                    renderKategoriCard(kategoriId, kategoriName, subkategories);
+                }
+            }
+            else if (kategoriId && subkategoriId) {
+                // Show only selected category and subcategory
+                const subkategories = subkategoriData[kategoriId];
+                if (subkategories) {
+                    const filteredSubkategories = subkategories.filter(sub => sub.id === subkategoriId);
+                    const kategoriName = getKategoriName(kategoriId);
+                    renderKategoriCard(kategoriId, kategoriName, filteredSubkategories);
+                }
+            }
+        }
+
+        function getKategoriName(kategoriId) {
+            const option = kategoriSelect.querySelector(`option[value="${kategoriId}"]`);
+            return option ? option.textContent : '';
+        }
+
+        function renderKategoriCard(kategoriId, kategoriName, subkategories) {
+            const urlPattern = queryResult.dataset.urlPattern;
+            
+            const cardHTML = `
+                <div class="bg-white rounded-lg shadow-md mb-6 p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">${kategoriName}</h2>
+                    <div class="flex flex-col space-y-2">
+                        ${subkategories.map(sub => `
+                            <a href="${urlPattern.replace('00000000-0000-0000-0000-000000000000', sub.id)}" 
+                               class="p-3 rounded-md hover:bg-blue-50 text-blue-600 hover:text-blue-700 transition-colors duration-200 border-b border-gray-100 last:border-b-0">
+                                ${sub.name}
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            queryResult.insertAdjacentHTML('beforeend', cardHTML);
+        }
+
+        // Initial load
+        fetchSubkategori();
+    </script>
+{% else %}
+    <p class="text-center py-4">Silahkan login terlebih dahulu</p>
+{% endif %}
+{% endblock content %}

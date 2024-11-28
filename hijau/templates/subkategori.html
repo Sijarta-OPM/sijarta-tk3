@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block content %}
+{% if logged_in  %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <!-- Subcategory and Category Titles -->
+        <div class="text-center flex flex-row justify-between">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ subkategori_jasa.1 }}</h1>
+            <h2 class="text-lg text-gray-600 mb-6">{{ kategori_jasa.1 }}</h2>
+        </div>
+
+        <!-- Subcategory Description -->
+        <div class="mb-6 bg-gray-100 rounded-lg p-4">
+            <p class="text-gray-700 leading-relaxed">{{ subkategori_jasa.2 }}</p>
+        </div>
+
+        <!-- Sesi Layanan Section -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Pilihan Sesi Layanan</h3>
+            <div class="space-y-4">
+                {% for sesi in sesi_layanan %}
+                <div class="p-4 bg-gray-100 flex flex-row justify-between rounded-lg border border-gray-200">
+                    <div class="flex flex-row">
+                        <p class="text-gray-800 font-medium mr-8">{{ sesi.1 }} jam</p>
+                        <p class="text-gray-600">Rp. {{ sesi.2 }}</p>
+                    </div>
+                    {% if is_pelanggan %}
+                    <div>
+                        <a href="#" class="py-2 px-4 font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition duration-300">
+                            Pesan Sekarang
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+
+        <!-- Pekerja Section -->
+        <div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Pekerja</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {% for p in pekerja %}
+                <a href="{% url 'profile' p.0%}" class="block">
+                <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                    <img 
+                        src="{{ p.12 }}" 
+                        alt="Pekerja" 
+                        class="w-24 h-24 mx-auto rounded-full mb-4 border border-gray-300 object-cover"
+                    >
+                    <p class="text-gray-800 font-medium">{{ p.1 }}</p>
+                </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% if not is_pelanggan %}
+        <div>
+            <button type="button" id="search-button" class="w-full mt-4 px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Gabung Sekarang
+            </button>
+        </div>
+        {%endif%}
+    </div>
+    {% include 'testimoni.html' %}
+</div>
+{% endif %}
+{% endblock content %}

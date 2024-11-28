@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="text-3xl font-bold text-center my-10">
+    WELCOME TO SIJARTA!
+</h1>
+<form method="POST" class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
+    {% csrf_token %}
+    <div class="mb-4">
+        <label for="noHp" class="block text-gray-700 font-medium mb-2">NoHp:</label>
+        <input type="text" name="noHp" id="noHp" 
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+               placeholder="Enter your phone number">
+    </div>
+    <div class="mb-4">
+        <label for="password" class="block text-gray-700 font-medium mb-2">Password:</label>
+        <input type="password" name="password" id="password" 
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+               placeholder="Enter your password">
+    </div>
+    <div class="text-center">
+        <input type="submit" value="Login" 
+               class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">
+    </div>
+</form>
+
+{% if messages %}
+<ul class="mt-4 max-w-md mx-auto bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+  {% for message in messages %}
+  <li>{{ message }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock content %}

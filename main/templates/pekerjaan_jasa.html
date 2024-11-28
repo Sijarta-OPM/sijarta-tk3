@@ -1,0 +1,30 @@
+{%include 'base.html'%}
+{% block content %}
+<select name="kategori_jasa" id="kategori_jasa">
+    <option value="">semua kategori jasa</option>
+    {%for jasa in kategori_jasa%}
+    <option value="{{jasa.0}}">{{jasa.1}}</option>
+    {%endfor%}
+</select>
+<select name="subkategori_jasa" id="subkategori_jasa">
+    
+</select>
+<script>
+    const selectSubkategori = document.getElementById('subkategori_jasa');
+    const subkategori_jasa = "{{subkategori_jasa}}"
+    let option_subkategori;
+    selectSubkategori.addEventListener('change', function() {
+        if (this.value){
+            subkategori_jasa.forEach(element => {
+                if (element[2] == this.value){
+                    option_subkategori = document.createElement('option');
+                    option_subkategori.value = element[0];
+                    option_subkategori.textContent = element[1];
+
+                    selectSubkategori.appendChild(option_subkategori);
+                }
+            });
+        }
+    });
+</script>
+{% endblock content %}
