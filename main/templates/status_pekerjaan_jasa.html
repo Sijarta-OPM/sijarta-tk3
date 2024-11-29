@@ -1,29 +1,41 @@
-{%include 'base.html'%}
+{% extends 'base.html' %}
 {% block content %}
-<select id="kategori-jasa">
-    {% for kategori in kategori_pemesanan %}
-    <option value="{{kategori.0}}">{{kategori.1}}</option>
-    {% endfor %}
-</select>
-<select id="status-pesanan">
-    {% for status in status_pesanan %}
-    <option value="{{status.0}}">{{status.1}}</option>
-    {% endfor %}
-</select>
-<button type="button" id="search-pesanan">
-    search
-</button>
-<div id="queryResult">
+<div class="container mx-auto p-4 bg-gray-50 min-h-screen">
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+        <div class="flex space-x-4 mb-6">
+            <select id="kategori-jasa" class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Pilih Kategori Jasa</option>
+                {% for kategori in kategori_pemesanan %}
+                <option value="{{kategori.0}}">{{kategori.1}}</option>
+                {% endfor %}
+            </select>
 
+            <select id="status-pesanan" class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Pilih Status Pesanan</option>
+                {% for status in status_pesanan %}
+                <option value="{{status.0}}">{{status.1}}</option>
+                {% endfor %}
+            </select>
+
+            <button id="search-pesanan" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition">
+                Cari
+            </button>
+        </div>
+
+        <div id="queryResult" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
 </div>
+
 <script>
     const button = document.getElementById('search-pesanan');
     const queryResult = document.getElementById('queryResult');
+    
     button.addEventListener('click', function(){
         queryResult.innerHTML = '';
         const kategori_jasa = document.getElementById('kategori-jasa').value;
         const status_pemesanan = document.getElementById('status-pesanan').value;
         const url = `{% url 'get_stasus_pemesanan'%}`;
+        
         fetch(url, {
             method: 'POST',
             headers : {
@@ -36,23 +48,73 @@
             })
         })
         .then(response => response.json())
-        .then(data =>{
-            console.log(data.data);
+        .then(data => {
+            if(data.data.length === 0) {
+                queryResult.innerHTML = `
+                    <div class="col-span-full text-center text-gray-500 py-8">
+                        Tidak ada pesanan yang ditemukan
+                    </div>
+                `;
+                return;
+            }
             
             data.data.forEach(element => {
+                const statusClass = 
+                    element[5] === 'Selesai' 
+                    ? 'bg-green-100 text-green-800' 
+                    : element[5] === 'Diproses'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-gray-100 text-gray-800';
+
                 queryResult.innerHTML += `
-                    <p>nama subkategori pesanan: ${element[0]}</p>
-                    <p>tanggal pemesanan: ${element[1]}</p>
-                    <p>nama pelanggan: ${element[2]}</p>
-                    <p>tanggal pekerjaan: ${element[3]}</p>
-                    <p>total biaya: ${element[4]}</p>
-                    <p>status pesanan: ${element[5]}</p>
-                    <button>
-                        update status
-                    </button>
+                    <div class="bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                        <div class="p-4 bg-gray-100 flex justify-between items-center">
+                            <h3 class="font-semibold text-lg text-gray-800">${element[0]}</h3>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="12" cy="5" r="1"></circle>
+                                <circle cx="12" cy="19" r="1"></circle>
+                            </svg>
+                        </div>
+                        <div class="p-4">
+                            <div class="space-y-2">
+                                <p class="flex justify-between">
+                                    <span class="text-gray-600">Tanggal Pemesanan:</span>
+                                    <span class="font-medium">${element[1]}</span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-600">Nama Pelanggan:</span>
+                                    <span class="font-medium">${element[2]}</span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-600">Tanggal Pekerjaan:</span>
+                                    <span class="font-medium">${element[3]}</span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-600">Total Biaya:</span>
+                                    <span class="font-medium text-green-600">Rp ${element[4]}</span>
+                                </p>
+                                <div class="flex justify-between items-center mt-4">
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">
+                                        ${element[5]}
+                                    </span>
+                                    <button class="text-blue-500 hover:text-blue-700 transition">
+                                        Update Status
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 `;
             });
         })
-    })
+        .catch(error => {
+            queryResult.innerHTML = `
+                <div class="col-span-full text-center text-red-500 py-8">
+                    Terjadi kesalahan: ${error.message}
+                </div>
+            `;
+        });
+    });
 </script>
 {% endblock content %}
