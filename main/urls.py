@@ -10,5 +10,7 @@ urlpatterns=[
     path('api/kategori/<uuid:id>', show_kategori_by_id, name='kategori'),
     path('api/search-subkategori/', search_subkategori, name="search"),
     path('pekerjaan-jasa/', view_pemesanan_jasa, name='pekerjaan_jasa'),
-    path('status-pekerjaan-jasa/',view_status_pemesanan_jasa, name='status_pekerjaan_jasa')
+    path('status-pekerjaan-jasa/',view_status_pemesanan_jasa, name='status_pekerjaan_jasa'),
+    path('api/get-subkategori-pemesanan/',get_subkategori_pemesanan, name='subkategori_pemesanan'),
+    path('api/get-pemesanan/', get_pemesanan, name="get_pemesanan")
 ]

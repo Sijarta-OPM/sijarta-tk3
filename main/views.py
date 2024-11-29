@@ -43,9 +43,13 @@ def login(request):
 
 def logout(request):
     if (request.session['sessionId'] != ''):
-        connection.cursor().execute("""
-            delete from public.session s where s.sessionId = %s
-        """, [request.session['sessionId']])
+        connection.cursor().execute(
+            """
+            delete from 
+                public.session s 
+            where 
+                s.sessionId = %s
+            """, [request.session['sessionId']])
     return redirect('home')
 
 def show_homepage(request):
@@ -387,21 +391,10 @@ def view_pemesanan_jasa(request):
                     # extract kategori pekerjaan
                     kategori_jasa = []
                     for pekerjaan in pekerjaan_tersedia:
-                        print(pekerjaan)
                         if [pekerjaan[1], pekerjaan[2]] not in kategori_jasa:
                             kategori_jasa.append([pekerjaan[1], pekerjaan[2]])
 
-                    # extract subkategori pekerjaan
-                    # instead of array, return json
-
-                    subkategori_jasa = []
-                    for pekerjaan in pekerjaan_tersedia:
-                        if not subkategori_jasa or [pekerjaan[3],pekerjaan[4]] not in subkategori_jasa:
-                            subkategori_jasa.append([str(pekerjaan[3]),str(pekerjaan[4]),str(pekerjaan[1])])
-
                     context['kategori_jasa'] = kategori_jasa
-                    context['subkategori_jasa'] = subkategori_jasa
-
                     return render(request, 'pekerjaan_jasa.html', context)
                                     
                 
@@ -411,3 +404,232 @@ def view_pemesanan_jasa(request):
 def view_status_pemesanan_jasa(request):
     context = {}
     return render(request, 'status_pekerjaan_jasa.html', context)
+
+def get_pemesanan(request):
+    user = get_user(request.session['sessionId'])
+    if not user:
+        return redirect('login')
+    # data = json.loads(request.body)
+    kategori = request.GET.get('kategorijasa', '').strip()
+    subkategori = request.GET.get('subkategorijasa', '').strip()
+    with connection.cursor() as cursor:
+        if (kategori == ""):
+            print(kategori)
+            cursor.execute(
+                '''
+                select
+                    skj.namasubkategori,
+                    pelanggan.nama namapelanggan,
+                    pj.tglpemesanan,
+                    pj.tglpekerjaan ,
+                    pj.totalbiaya  
+                from 
+                    public.tr_pemesanan_status ps
+                join
+                    public.tr_pemesanan_jasa pj
+                on
+                    pj.id = ps.idtrpemesanan
+                join
+                    public.subkategori_jasa skj
+                on 
+                    skj.id = pj.idkategorijasa
+                join
+                    public.kategori_jasa kj
+                on 
+                    kj.id = skj.kategorijasaid
+                join 
+                    public.user pelanggan
+                on 
+                    pelanggan.id = pj.idpelanggan
+                where 
+                    ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
+                    and pj.idpekerja = %s
+                ''',[user[0]]
+            )
+            result = cursor.fetchall()
+        else:
+            cursor.execute(
+                '''
+                select
+                    skj.namasubkategori,
+                    pelanggan.nama namapelanggan,
+                    pj.tglpemesanan,
+                    pj.tglpekerjaan ,
+                    pj.totalbiaya           
+
+                from 
+                    public.tr_pemesanan_status ps
+                join
+                    public.tr_pemesanan_jasa pj
+                on
+                    pj.id = ps.idtrpemesanan
+                join
+                    public.subkategori_jasa skj
+                on 
+                    skj.id = pj.idkategorijasa
+                join
+                    public.kategori_jasa kj
+                on 
+                    kj.id = skj.kategorijasaid
+                join 
+                    public.user pelanggan
+                on 
+                    pelanggan.id = pj.idpelanggan
+
+                where 
+                    ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
+                    and pj.idpekerja = %s
+                    and kj.id = %s
+                ''',[user[0], kategori ]
+            )
+            if (subkategori):
+                cursor.execute(
+                '''
+                select
+                    skj.namasubkategori,
+                    pelanggan.nama namapelanggan,
+                    pj.tglpemesanan,
+                    pj.tglpekerjaan ,
+                    pj.totalbiaya           
+
+                from 
+                    public.tr_pemesanan_status ps
+                join
+                    public.tr_pemesanan_jasa pj
+                on
+                    pj.id = ps.idtrpemesanan
+                join
+                    public.subkategori_jasa skj
+                on 
+                    skj.id = pj.idkategorijasa
+                join
+                    public.kategori_jasa kj
+                on 
+                    kj.id = skj.kategorijasaid
+                join 
+                    public.user pelanggan
+                on 
+                    pelanggan.id = pj.idpelanggan
+
+                where 
+                    ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
+                    and pj.idpekerja = %s
+                    and kj.id = %s
+                    and skj.id = %s
+                ''',[user[0], kategori, subkategori ]
+            )
+                
+                
+            result = cursor.fetchall()
+        print(result)
+        return JsonResponse({
+            'status' : 'success',
+            'data' : result
+        }, safe=False)
+
+def get_subkategori_pemesanan(request):
+    user = get_user(request.session['sessionId'])
+    if (not user):
+        return redirect('login')
+    idkategorijasa = request.GET.get('idKategoriJasa','').strip()
+    print("id pekerja: ", user[0])
+    print("kategori id ", idkategorijasa)
+
+    query = ""
+    subkategori = ""
+    
+    with connection.cursor() as cursor:
+        if (idkategorijasa):
+            cursor.execute(
+                '''
+                select
+                    distinct
+                    skj.id idsubkategori,
+                    skj.namasubkategori
+                from 
+                    public.tr_pemesanan_status ps
+                join
+                    public.tr_pemesanan_jasa pj
+                on
+                    pj.id = ps.idtrpemesanan
+                join
+                    public.subkategori_jasa skj
+                on 
+                    skj.id = pj.idkategorijasa
+                join
+                    public.kategori_jasa kj
+                on 
+                    kj.id = skj.kategorijasaid
+                where 
+                    ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
+                    and pj.idpekerja = %s
+                    and kj.id = %s
+                ''', [user[0], idkategorijasa]
+            
+            )
+            subkategori = cursor.fetchall()
+        return JsonResponse({
+            'status' : 'success',
+            'data' : subkategori
+        }, safe=False)
+
+
+def get_user(sessionId):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            select 
+                *
+            from 
+                public.user u,
+                public.session s
+            where
+                u.id = s.userid
+                and s.sessionId = %s
+            ''', [sessionId]
+        )
+        user = cursor.fetchone()
+        if (user):
+            return user
+        else:
+            return
+
+def is_pelanggan(userid):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            select
+                *
+            from
+                public.pelanggan
+            where id = %s
+            ''', [userid]
+        )
+        if (cursor.fetchone()):
+            return True
+        else :
+            return False
+def get_pelanggan(userid):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            select
+                *
+            from
+                public.pelanggan
+            where id = %s
+            ''', [userid]
+        )
+        return cursor.fetchone()
+def get_pekerja(userid):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            select
+                *
+            from
+                public.pekerja
+            where id = %s
+            ''', [userid]
+        )
+        return cursor.fetchone()

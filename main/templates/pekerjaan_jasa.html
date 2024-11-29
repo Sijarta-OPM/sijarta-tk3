@@ -1,62 +1,114 @@
 {%include 'base.html'%}
 {% block content %}
-<div id="filter_resoran">
-    <select name="kategori_jasa" id="kategori_jasa">
-        <option value="">semua kategori jasa</option>
-        {%for jasa in kategori_jasa%}
-        <option value="{{jasa.0}}">{{jasa.1}}</option>
-        {%endfor%}
-    </select>
-    <select name="subkategori_jasa" id="subkategori_jasa">
-        <option value="">semua subkategori jasa</option>
-        
-    </select>
-    <button id="search_kategori">
-        search
-    </button>
+<select name="kategori_jasa" id="kategori_jasa">
+    <option value="">semua kategori jasa</option>
+    {%for jasa in kategori_jasa%}
+    <option value="{{jasa.0}}">{{jasa.1}}</option>
+    {%endfor%}
+</select>
+
+<select name="subkategori_jasa" id="subkategori_jasa">
+    <option value="">semua subkategori jasa</option>
+    
+</select>
+
+<button type="button" id="filter_restoran">
+    search
+</button>
+
+<div id="queryResult">
+
 </div>
 
 <script>
-    const selectkategori = document.getElementById('kategori_jasa');
-    const selectSubkategori = document.getElementById('subkategori_jasa');
-    const searchButton = document.getElementById('search_kategori');
-    let subkategori_jasa = "{{subkategori_jasa}}"
+    const selectKategori = document.getElementById('kategori_jasa');
+    const selectSubkategori = document.getElementById('subkategori_jasa')
+    const searchButton = document.getElementById('filter_restoran')
+    const queryResult = document.getElementById('queryResult');
+    selectKategori.addEventListener('change', fetchSubkategori);
+    searchButton.addEventListener('click', search_pesanan);
 
-    // parse string of array to actual array
-    subkategori_jasa = subkategori_jasa.replace(/&#x27;/g, "'");
-    subkategori_jasa = subkategori_jasa.replace(/'/g, '"');
-    subkategori_jasa = JSON.parse(subkategori_jasa);
+    function search_pesanan(){
+        const kategori = selectKategori.value;
+        const subkategori = selectSubkategori.value;
+        const parameters = new URLSearchParams();
 
-    
-    selectkategori.addEventListener('change', function() {
-        // render all option associated with every select
-        let option_subkategori;
-        option_subkategori = document.createElement('option');
-        // reset the option
-        option_subkategori.value = "";
-
-        option_subkategori.textContent = "semua subkategori jasa";
-        selectSubkategori.innerHTML = "";
-        selectSubkategori.appendChild(option_subkategori);
-
-        if (this.value){
-            subkategori_jasa.forEach(element => {
-                if (element[2] == this.value){
-                    option_subkategori = document.createElement('option');
-                    option_subkategori.value = element[0];
-                    option_subkategori.textContent = element[1];
-                    selectSubkategori.appendChild(option_subkategori);
-                }
-            });
-        }
-    });
-    // sent get request to get kategori
-    searchButton.addEventListener('click', searchKategori);
-
-    function search_kategori(){
+        if (kategori) parameters.append('kategorijasa', kategori);
+        if (subkategori) parameters.append('subkategorijasa', subkategori);
+        const url = `/api/get-pemesanan/?${parameters.toString()}`;
         
+        queryResult.innerHTML = '';
+        fetch(url, {
+            method : "GET",
+            headers : {
+                Accept: "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+            }
+        })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then (data => {
+            console.log(data.data);
+            data.data.forEach(element => {
+                queryResult.innerHTML += `
+                <p>subkategori jasa: ${element[0]} </p>
+                <p>pelanggan: ${element[1]} </p>
+                <p>tanggal pemesanan: ${element[2]} </p>
+                <p>tanggal pekerjaan: ${element[3]} </p>
+                <p>total biaya ${element[4]} </p>
+                <a href="#">kerjakan</a>
+                `
+            })
+        })
     }
 
+    function fetchSubkategori(){
+        const idKategoriJasa = selectKategori.value;
+        const queryResult = document.getElementById('queryResult')
+        const parameters = new URLSearchParams();
 
+        if (idKategoriJasa) parameters.append('idKategoriJasa',idKategoriJasa);
+
+        const url = `/api/get-subkategori-pemesanan/?${parameters.toString()}`;
+
+        fetch(url, {
+            method: 'GET',
+            headers : {
+                Accept: "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+            }
+        })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+            // jika data yang dikirimkan itu null, atau string kosong, then reset
+            if (!data.data){
+                console.log(data);
+                selectSubkategori.innerHTML = ` <option value="">semua subkategori jasa</option>`;
+            }
+            else {
+                const subkategori = data.data;
+                selectSubkategori.innerHTML = ` <option value="">semua subkategori jasa</option>`;
+                subkategori.forEach(element => {
+                let option = document.createElement('option');
+                option.value = element[0];
+                option.textContent = element[1];
+                selectSubkategori.appendChild(option);
+                });
+            }
+            // tampilkan setiap subkategori yang ditemukan pada select tag yang tersedia
+            
+            
+        })
+
+    }
 </script>
 {% endblock content %}
