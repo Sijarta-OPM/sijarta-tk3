@@ -238,21 +238,41 @@ def search_subkategori(request):
     subkategori_jasa = f"%{subkategori_jasa}%"
     with connection.cursor() as cursor:
         if (not kategori_jasa):
-            cursor.execute(
-                '''
-                select 
-                    kj.id idkategori, 
-                    kj.namakategori namakategori,
-                    skj.id idsubkategori,
-                    skj.namasubkategori namasubkategori
-                from 
-                    public.kategori_jasa kj
-                join
-                    public.subkategori_jasa skj
-                on 
-                    kj.id = skj.kategorijasaid
-                '''
-            )
+            if (not subkategori_jasa):
+                cursor.execute(
+                    '''
+                    select 
+                        kj.id idkategori, 
+                        kj.namakategori namakategori,
+                        skj.id idsubkategori,
+                        skj.namasubkategori namasubkategori
+                    from 
+                        public.kategori_jasa kj
+                    join
+                        public.subkategori_jasa skj
+                    on 
+                        kj.id = skj.kategorijasaid
+                    
+                    ''', 
+                )
+            else:
+                cursor.execute(
+                    '''
+                    select 
+                        kj.id idkategori, 
+                        kj.namakategori namakategori,
+                        skj.id idsubkategori,
+                        skj.namasubkategori namasubkategori
+                    from 
+                        public.kategori_jasa kj
+                    join
+                        public.subkategori_jasa skj
+                    on 
+                        kj.id = skj.kategorijasaid
+                    where
+                        namasubkategori ilike %s
+                    ''', [subkategori_jasa]
+                )
         else:
             cursor.execute(
                 '''

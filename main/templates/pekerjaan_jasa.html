@@ -1,23 +1,28 @@
 {%include 'base.html'%}
 {% block content %}
-<select name="kategori_jasa" id="kategori_jasa">
-    <option value="">semua kategori jasa</option>
-    {%for jasa in kategori_jasa%}
-    <option value="{{jasa.0}}">{{jasa.1}}</option>
-    {%endfor%}
-</select>
+<div class="container mx-auto p-4 max-w-2xl">
+    <div class="bg-white shadow-md rounded-lg p-6 space-y-4">
+        <div class="flex space-x-4">
+            <select name="kategori_jasa" id="kategori_jasa" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Semua Kategori Jasa</option>
+                {%for jasa in kategori_jasa%}
+                <option value="{{jasa.0}}">{{jasa.1}}</option>
+                {%endfor%}
+            </select>
 
-<select name="subkategori_jasa" id="subkategori_jasa">
-    <option value="">semua subkategori jasa</option>
-    
-</select>
+            <select name="subkategori_jasa" id="subkategori_jasa" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Semua Subkategori Jasa</option>
+            </select>
+        </div>
 
-<button type="button" id="filter_restoran">
-    search
-</button>
+        <button type="button" id="filter_restoran" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300 ease-in-out">
+            Cari
+        </button>
 
-<div id="queryResult">
-
+        <div id="queryResult" class="space-y-4 mt-4">
+            <!-- Search results will be dynamically inserted here -->
+        </div>
+    </div>
 </div>
 
 <script>
@@ -55,12 +60,16 @@
             console.log(data.data);
             data.data.forEach(element => {
                 queryResult.innerHTML += `
-                <p>subkategori jasa: ${element[0]} </p>
-                <p>pelanggan: ${element[1]} </p>
-                <p>tanggal pemesanan: ${element[2]} </p>
-                <p>tanggal pekerjaan: ${element[3]} </p>
-                <p>total biaya ${element[4]} </p>
-                <a href="#">kerjakan</a>
+                <div class="bg-gray-100 p-4 rounded-md shadow-sm space-y-2">
+                    <p class="text-gray-700"><span class="font-semibold">Subkategori Jasa:</span> ${element[0]} </p>
+                    <p class="text-gray-700"><span class="font-semibold">Pelanggan:</span> ${element[1]} </p>
+                    <p class="text-gray-700"><span class="font-semibold">Tanggal Pemesanan:</span> ${element[2]} </p>
+                    <p class="text-gray-700"><span class="font-semibold">Tanggal Pekerjaan:</span> ${element[3]} </p>
+                    <p class="text-gray-700"><span class="font-semibold">Total Biaya:</span> ${element[4]} </p>
+                    <a href="#" class="inline-block bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition duration-300 ease-in-out">
+                        Kerjakan
+                    </a>
+                </div>
                 `
             })
         })
@@ -68,7 +77,6 @@
 
     function fetchSubkategori(){
         const idKategoriJasa = selectKategori.value;
-        const queryResult = document.getElementById('queryResult')
         const parameters = new URLSearchParams();
 
         if (idKategoriJasa) parameters.append('idKategoriJasa',idKategoriJasa);
@@ -89,7 +97,6 @@
           return response.json();
         })
         .then(data => {
-            // jika data yang dikirimkan itu null, atau string kosong, then reset
             if (!data.data){
                 console.log(data);
                 selectSubkategori.innerHTML = ` <option value="">semua subkategori jasa</option>`;
@@ -104,11 +111,7 @@
                 selectSubkategori.appendChild(option);
                 });
             }
-            // tampilkan setiap subkategori yang ditemukan pada select tag yang tersedia
-            
-            
         })
-
     }
 </script>
 {% endblock content %}
