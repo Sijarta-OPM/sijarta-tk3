@@ -12,5 +12,7 @@ urlpatterns=[
     path('pekerjaan-jasa/', view_pemesanan_jasa, name='pekerjaan_jasa'),
     path('status-pekerjaan-jasa/',view_status_pemesanan_jasa, name='status_pekerjaan_jasa'),
     path('api/get-subkategori-pemesanan/',get_subkategori_pemesanan, name='subkategori_pemesanan'),
-    path('api/get-pemesanan/', get_pemesanan, name="get_pemesanan")
+    path('api/get-pemesanan/', get_pemesanan, name="get_pemesanan"),
+    path('api/get-status-pemesanan/', get_status_pemesanan, name="get_stasus_pemesanan"),
+    path('api/kerjakan-pemesanan-jasa/', kerjakan_pemesesanan_jasa)
 ]

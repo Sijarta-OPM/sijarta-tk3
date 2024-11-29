@@ -66,13 +66,38 @@
                     <p class="text-gray-700"><span class="font-semibold">Tanggal Pemesanan:</span> ${element[2]} </p>
                     <p class="text-gray-700"><span class="font-semibold">Tanggal Pekerjaan:</span> ${element[3]} </p>
                     <p class="text-gray-700"><span class="font-semibold">Total Biaya:</span> ${element[4]} </p>
-                    <a href="#" class="inline-block bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition duration-300 ease-in-out">
+                    <button data-url="/api/kerjakan-pemesanan-jasa/" data-idpemesanan="${element[5]}" class="kerjakan-button inline-block bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition duration-300 ease-in-out">
                         Kerjakan
-                    </a>
+                    </button>
                 </div>
                 `
             })
+            giveEventListener();
         })
+    }
+    function giveEventListener(){
+        document.querySelectorAll('button.kerjakan-button').forEach(button => {
+            button.addEventListener('click', event => {
+                
+                const url = event.target.getAttribute('data-url');
+                const idpemesanan = event.target.getAttribute('data-idpemesanan');
+                console.log(idpemesanan);
+                
+                fetch(url, {
+                    method: "POST",
+                    headers : {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}' 
+                    },
+                    body : JSON.stringify({
+                        idtrpemesanan : idpemesanan
+                    })
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+            });
+        });
     }
 
     function fetchSubkategori(){
@@ -89,6 +114,7 @@
                 Accept: "application/json",
                 "X-Requested-With": "XMLHttpRequest",
             }
+            
         })
         .then((response) => {
           if (!response.ok) {

@@ -1,6 +1,58 @@
 {%include 'base.html'%}
 {% block content %}
-<h1>
-    this is status pekerjaan jasa page
-</h1>
+<select id="kategori-jasa">
+    {% for kategori in kategori_pemesanan %}
+    <option value="{{kategori.0}}">{{kategori.1}}</option>
+    {% endfor %}
+</select>
+<select id="status-pesanan">
+    {% for status in status_pesanan %}
+    <option value="{{status.0}}">{{status.1}}</option>
+    {% endfor %}
+</select>
+<button type="button" id="search-pesanan">
+    search
+</button>
+<div id="queryResult">
+
+</div>
+<script>
+    const button = document.getElementById('search-pesanan');
+    const queryResult = document.getElementById('queryResult');
+    button.addEventListener('click', function(){
+        queryResult.innerHTML = '';
+        const kategori_jasa = document.getElementById('kategori-jasa').value;
+        const status_pemesanan = document.getElementById('status-pesanan').value;
+        const url = `{% url 'get_stasus_pemesanan'%}`;
+        fetch(url, {
+            method: 'POST',
+            headers : {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}' 
+            },
+            body : JSON.stringify({
+                kategori : kategori_jasa,
+                status: status_pemesanan
+            })
+        })
+        .then(response => response.json())
+        .then(data =>{
+            console.log(data.data);
+            
+            data.data.forEach(element => {
+                queryResult.innerHTML += `
+                    <p>nama subkategori pesanan: ${element[0]}</p>
+                    <p>tanggal pemesanan: ${element[1]}</p>
+                    <p>nama pelanggan: ${element[2]}</p>
+                    <p>tanggal pekerjaan: ${element[3]}</p>
+                    <p>total biaya: ${element[4]}</p>
+                    <p>status pesanan: ${element[5]}</p>
+                    <button>
+                        update status
+                    </button>
+                `;
+            });
+        })
+    })
+</script>
 {% endblock content %}

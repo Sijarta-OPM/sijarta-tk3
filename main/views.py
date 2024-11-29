@@ -422,7 +422,49 @@ def view_pemesanan_jasa(request):
     return redirect('login')
 
 def view_status_pemesanan_jasa(request):
-    context = {}
+    user = get_user(request.session['sessionId'])
+    if (not user):
+        return redirect('login')
+    role = get_pekerja(user[0])
+    is_pelanggan = False
+    if (not role):
+        is_pelanggan = True
+        role = get_pelanggan(user[0])
+    # user and its role already defined, next 
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            select 
+                kj.id,
+                kj.namakategori
+            from 
+                public.kategori_jasa kj
+            join
+                public.pekerja_kategori_jasa pkj
+            on
+                pkj.kategorijasaid = kj.id
+                and pkj.pekerjaid = %s
+            ''', [user[0]]
+        )
+        kategori = cursor.fetchall()
+
+        cursor.execute(
+            '''
+            select * from public.status_pesanan
+            '''
+        )
+        status = cursor.fetchall()
+        
+    context = {
+        'user': user,
+        'role': role,
+        'is_pelanggan' : is_pelanggan,
+        'logged_in' : True,
+        'kategori_pemesanan' : kategori,
+        'status_pesanan' : status
+
+    }
+    
     return render(request, 'status_pekerjaan_jasa.html', context)
 
 def get_pemesanan(request):
@@ -441,8 +483,10 @@ def get_pemesanan(request):
                     skj.namasubkategori,
                     pelanggan.nama namapelanggan,
                     pj.tglpemesanan,
-                    pj.tglpekerjaan ,
-                    pj.totalbiaya  
+                    pj.tglpekerjaan,
+                    pj.totalbiaya,
+                    ps.idtrpemesanan           
+
                 from 
                     public.tr_pemesanan_status ps
                 join
@@ -474,8 +518,10 @@ def get_pemesanan(request):
                     skj.namasubkategori,
                     pelanggan.nama namapelanggan,
                     pj.tglpemesanan,
-                    pj.tglpekerjaan ,
-                    pj.totalbiaya           
+                    pj.tglpekerjaan,
+                    pj.totalbiaya,
+                    ps.idtrpemesanan           
+
 
                 from 
                     public.tr_pemesanan_status ps
@@ -509,8 +555,9 @@ def get_pemesanan(request):
                     skj.namasubkategori,
                     pelanggan.nama namapelanggan,
                     pj.tglpemesanan,
-                    pj.tglpekerjaan ,
-                    pj.totalbiaya           
+                    pj.tglpekerjaan,
+                    pj.totalbiaya,
+                    ps.idtrpemesanan           
 
                 from 
                     public.tr_pemesanan_status ps
@@ -653,3 +700,144 @@ def get_pekerja(userid):
             ''', [userid]
         )
         return cursor.fetchone()
+
+def kerjakan_pemesesanan_jasa(request):
+    '''
+    kerjakan_pemesanan_jasa adalah api yang digunakan untuk update status pemesanan 
+    pelanggan dari pembayaran dikonfirmasi
+    menjadi pekerja sedang menuju ke lokasi
+    '''
+    user = get_user(request.session['sessionId'])
+    if (not user):
+        return redirect('login')
+    data = json.loads(request.body)
+    idtrpemesanan = data.get('idtrpemesanan', '').strip()
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            update public.tr_pemesanan_status
+            set
+                idstatus = 'e0bebe06-5c2c-4f8a-92f4-b8fdd0a3d3c8'
+            where
+                idtrpemesanan = %s
+                and idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
+            ''', [idtrpemesanan]
+        )
+    return JsonResponse({
+        'status' : 'success' 
+    })
+
+def get_status_pemesanan(request):
+    data = json.loads(request.body)
+    kategori_jasa =  data.get('kategori')
+    status_pesanan =  data.get('status')
+    with connection.cursor() as cursor:
+        if (not kategori_jasa):
+            if (not status_pesanan):
+                    cursor.execute(
+                        '''
+                        select 
+                            skj.namasubkategori nama_subkategori_pesanan,
+                            pj.tglpemesanan tanggal_pemesanan,
+                            pelanggan.nama nama_pelanggan,
+                            pj.tglpekerjaan tanggal_pekerjaan,
+                            pj.totalbiaya total_biaya,
+                            sp.status status_pesanan
+                        from 
+                            public.tr_pemesanan_status ps
+                        join   
+                            public.tr_pemesanan_jasa pj
+                        on
+                            pj.id = ps.idtrpemesanan
+                        join 
+                            public.subkategori_jasa skj
+                        on
+                            skj.id = pj.idkategorijasa
+                        join 
+                            public.user pelanggan
+                        on
+                            pelanggan.id = pj.idpelanggan
+                        join
+                            public.status_pesanan sp
+                        on
+                            sp.id = ps.idstatus
+                        '''
+                    )
+                    result = cursor.fetchall()
+                    print('hey this is executed and its true')
+            else:
+                cursor.execute(
+                    '''
+                    select 
+                        skj.namasubkategori nama_subkategori_pesanan,
+                        pj.tglpemesanan tanggal_pemesanan,
+                        pelanggan.nama nama_pelanggan,
+                        pj.tglpekerjaan tanggal_pekerjaan,
+                        pj.totalbiaya total_biaya,
+                        sp.status status_pesanan
+                    from 
+                        public.tr_pemesanan_status ps
+                    join   
+                        public.tr_pemesanan_jasa pj
+                    on
+                        pj.id = ps.idtrpemesanan
+                    join 
+                        public.subkategori_jasa skj
+                    on
+                        skj.id = pj.idkategorijasa
+                    join 
+                        public.user pelanggan
+                    on
+                        pelanggan.id = pj.idpelanggan
+                    join
+                        public.status_pesanan sp
+                    on
+                        sp.id = ps.idstatus
+                    where
+                        ps.idstatus = %s
+                    ''',[status_pesanan]
+                )
+                result = cursor.fetchall()
+        else:
+            cursor.execute(
+                '''
+                select 
+                    skj.namasubkategori nama_subkategori_pesanan,
+                    pj.tglpemesanan tanggal_pemesanan,
+                    pelanggan.nama nama_pelanggan,
+                    pj.tglpekerjaan tanggal_pekerjaan,
+                    pj.totalbiaya total_biaya,
+                    sp.status status_pesanan
+                from 
+                    public.tr_pemesanan_status ps
+                join
+                    public.status_pesanan sp
+                on
+                    sp.id = ps.idstatus
+                join   
+                    public.tr_pemesanan_jasa pj
+                on
+                    pj.id = ps.idtrpemesanan
+                join 
+                    public.subkategori_jasa skj
+                on
+                    skj.id = pj.idkategorijasa
+                join 
+                    public.user pelanggan
+                on
+                    pelanggan.id = pj.idpelanggan
+                join public.kategori_jasa kj
+                on
+                    kj.id = skj.kategorijasaid
+                where
+                    ps.idstatus = %s
+                    and kj.id = %s
+                ''', [status_pesanan, kategori_jasa]
+            )
+            result = cursor.fetchall()
+            print('hey this is executed and its false')
+
+    return JsonResponse({
+        'status' : 'success',
+        'data' : result
+    })
