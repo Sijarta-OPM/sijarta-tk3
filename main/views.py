@@ -451,6 +451,7 @@ def view_status_pemesanan_jasa(request):
         cursor.execute(
             '''
             select * from public.status_pesanan
+            where id not in ('3fa85f64-5717-4562-b3fc-2c963f66afa6', '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3', 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9')
             '''
         )
         status = cursor.fetchall()
@@ -521,8 +522,6 @@ def get_pemesanan(request):
                     pj.tglpekerjaan,
                     pj.totalbiaya,
                     ps.idtrpemesanan           
-
-
                 from 
                     public.tr_pemesanan_status ps
                 join
@@ -541,7 +540,6 @@ def get_pemesanan(request):
                     public.user pelanggan
                 on 
                     pelanggan.id = pj.idpelanggan
-
                 where 
                     ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
                     and pj.idpekerja = %s
@@ -742,7 +740,8 @@ def get_status_pemesanan(request):
                             pelanggan.nama nama_pelanggan,
                             pj.tglpekerjaan tanggal_pekerjaan,
                             pj.totalbiaya total_biaya,
-                            sp.status status_pesanan
+                            sp.status status_pesanan,
+                        ps.idtrpemesanan
                         from 
                             public.tr_pemesanan_status ps
                         join   
@@ -761,6 +760,12 @@ def get_status_pemesanan(request):
                             public.status_pesanan sp
                         on
                             sp.id = ps.idstatus
+                        where 
+                            ps.idstatus not in 
+                            ('3fa85f64-5717-4562-b3fc-2c963f66afa6', 
+                            '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3', 
+                            'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9')
+                        
                         '''
                     )
                     result = cursor.fetchall()
@@ -774,7 +779,8 @@ def get_status_pemesanan(request):
                         pelanggan.nama nama_pelanggan,
                         pj.tglpekerjaan tanggal_pekerjaan,
                         pj.totalbiaya total_biaya,
-                        sp.status status_pesanan
+                        sp.status status_pesanan,
+                        ps.idtrpemesanan
                     from 
                         public.tr_pemesanan_status ps
                     join   
@@ -799,45 +805,104 @@ def get_status_pemesanan(request):
                 )
                 result = cursor.fetchall()
         else:
-            cursor.execute(
-                '''
-                select 
-                    skj.namasubkategori nama_subkategori_pesanan,
-                    pj.tglpemesanan tanggal_pemesanan,
-                    pelanggan.nama nama_pelanggan,
-                    pj.tglpekerjaan tanggal_pekerjaan,
-                    pj.totalbiaya total_biaya,
-                    sp.status status_pesanan
-                from 
-                    public.tr_pemesanan_status ps
-                join
-                    public.status_pesanan sp
-                on
-                    sp.id = ps.idstatus
-                join   
-                    public.tr_pemesanan_jasa pj
-                on
-                    pj.id = ps.idtrpemesanan
-                join 
-                    public.subkategori_jasa skj
-                on
-                    skj.id = pj.idkategorijasa
-                join 
-                    public.user pelanggan
-                on
-                    pelanggan.id = pj.idpelanggan
-                join public.kategori_jasa kj
-                on
-                    kj.id = skj.kategorijasaid
-                where
-                    ps.idstatus = %s
-                    and kj.id = %s
-                ''', [status_pesanan, kategori_jasa]
-            )
-            result = cursor.fetchall()
-            print('hey this is executed and its false')
-
+            if (status_pesanan):
+                cursor.execute(
+                    '''
+                    select 
+                        skj.namasubkategori nama_subkategori_pesanan,
+                        pj.tglpemesanan tanggal_pemesanan,
+                        pelanggan.nama nama_pelanggan,
+                        pj.tglpekerjaan tanggal_pekerjaan,
+                        pj.totalbiaya total_biaya,
+                        sp.status status_pesanan,
+                        ps.idtrpemesanan
+                    from 
+                        public.tr_pemesanan_status ps
+                    join
+                        public.status_pesanan sp
+                    on
+                        sp.id = ps.idstatus
+                    join   
+                        public.tr_pemesanan_jasa pj
+                    on
+                        pj.id = ps.idtrpemesanan
+                    join 
+                        public.subkategori_jasa skj
+                    on
+                        skj.id = pj.idkategorijasa
+                    join 
+                        public.user pelanggan
+                    on
+                        pelanggan.id = pj.idpelanggan
+                    join public.kategori_jasa kj
+                    on
+                        kj.id = skj.kategorijasaid
+                    where
+                        ps.idstatus = %s
+                        and kj.id = %s
+                    ''', [status_pesanan, kategori_jasa]
+                )
+                result = cursor.fetchall()
+            else:
+                cursor.execute(
+                    '''
+                    select 
+                        skj.namasubkategori nama_subkategori_pesanan,
+                        pj.tglpemesanan tanggal_pemesanan,
+                        pelanggan.nama nama_pelanggan,
+                        pj.tglpekerjaan tanggal_pekerjaan,
+                        pj.totalbiaya total_biaya,
+                        sp.status status_pesanan,
+                        ps.idtrpemesanan
+                    from 
+                        public.tr_pemesanan_status ps
+                    join
+                        public.status_pesanan sp
+                    on
+                        sp.id = ps.idstatus
+                    join   
+                        public.tr_pemesanan_jasa pj
+                    on
+                        pj.id = ps.idtrpemesanan
+                    join 
+                        public.subkategori_jasa skj
+                    on
+                        skj.id = pj.idkategorijasa
+                    join 
+                        public.user pelanggan
+                    on
+                        pelanggan.id = pj.idpelanggan
+                    join public.kategori_jasa kj
+                    on
+                        kj.id = skj.kategorijasaid
+                    where
+                        kj.id = %s
+                        and ps.idstatus not in 
+                        (
+                        '3fa85f64-5717-4562-b3fc-2c963f66afa6', 
+                        '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3', 
+                        'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
+                        )
+                    ''', [kategori_jasa]
+                )
+                result = cursor.fetchall()
     return JsonResponse({
         'status' : 'success',
         'data' : result
+    })
+
+def update_status_pemesanan(request):
+    user = get_user(request.session['sessionId'])
+    if ( not user ):
+        return redirect('login')
+    # since user is logged in
+    data = json.loads(request.body)
+    idtrpemesanan = data.get('idtrpemesanan')
+    connection.cursor().execute(
+        '''
+        select public.update_status(%s);
+        ''', [idtrpemesanan]
+    )
+    return JsonResponse({
+        'status' : 'success'
     })
