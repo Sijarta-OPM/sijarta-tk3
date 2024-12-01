@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.db import connection
 from django.http import JsonResponse
 from datetime import date
+from main.views import get_user
 import uuid
 
 def topup(request):
@@ -92,7 +93,8 @@ def payment(request):
             
     return redirect('mypay:show_transaction_form')
         
-def get_order(request, id):
+def get_order(request):
+    user = get_user(request.session['sessionId'])
 
     with connection.cursor() as cursor:
         
@@ -100,8 +102,6 @@ def get_order(request, id):
             '''
             select 
                 pj.id idpemesanan, 
-                pekerja.id idpekerja, 
-                pekerja.nama namapekerja, 
                 pelanggan.id idpelanggan, 
                 pelanggan.nama namapelanggan, 
                 sj.namasubkategori namasubkategori, 
@@ -123,10 +123,6 @@ def get_order(request, id):
             on 
                 pelanggan.id = pj.idpelanggan
             join 
-                public.user pekerja
-            on 
-                pekerja.id = pj.idpekerja
-            join 
                 public.sesi_layanan sl
             on 
                 sl.subkategoriid = pj.idkategorijasa and sl.sesi = pj.sesi
@@ -135,15 +131,10 @@ def get_order(request, id):
             on 
                 sj.id = sl.subkategoriid
             where 
-                sp.status like 'Menunggu Pembayaran' and pelanggan.id=%s 
-            ''', [id]
+                sp.id = '3fa85f64-5717-4562-b3fc-2c963f66afa6' and pelanggan.id=%s 
+            ''', [user[0]]
         )
-        column = [col[0] for col in cursor.description]
-
-        pesanan_jasa = [
-            dict(zip(column, row))
-            for row in cursor.fetchall()
-        ]
+        pesanan_jasa = cursor.fetchall()
         return JsonResponse(
             {
                 'status': 'success',

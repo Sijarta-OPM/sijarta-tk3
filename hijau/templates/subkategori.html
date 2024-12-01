@@ -1,6 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
 {% if logged_in  %}
+<div id="crudModal" tabindex="-1" aria-hidden="true" class="hidden fixed inset-0 z-50 w-full flex items-center justify-center bg-gray-800 bg-opacity-50 overflow-x-hidden overflow-y-auto transition-opacity duration-300 ease-out">
+    <div id="crudModalContent" class="relative bg-white rounded-lg shadow-lg w-5/6 sm:w-3/4 md:w-1/2 lg:w-1/3 mx-4 sm:mx-0 transform scale-95 opacity-0 transition-transform transition-opacity duration-300 ease-out">
+        <!-- Modal headers -->
+        <div class="flex items-center justify-between p-4 border-b rounded-t">
+            <h3 class="text-xl font-semibold text-gray-900">
+                Pesan Jasa
+            </h3>
+            <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" id="closeModalBtn">
+                <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="sr-only">Close modal</span>
+            </button>
+        </div>
+        <!-- Modal body -->
+        <div class="px-6 py-4 space-y-6 form-style">
+            <form id="reviewEntryForm">
+                
+                <!-- <input type="hidden" id="pk_resto" name="pk_resto"> -->
+                 <input type="hidden" nama="idkategorijasa" id="idkategorijasa">
+                 <input type="hidden" nama="sesi" id="sesi">
+                <div class="mb-4">
+                    <label for="tglpemesanan" class="block text-sm font-medium text-gray-700">Tanggal Pemesanan</label>
+                    <input type="date" id="tglpemesanan" name="tglpemesanan">
+                </div>
+
+                <div class="mb-4">
+                    <label for="diskon" class="block text-sm font-medium text-gray-700">Diskon</label>
+                    <input type="text" id="diskon" name="diskon" class="mt-1 block w-full border border-gray-300 rounded-md p-2 hover:border-indigo-700" required>
+                </div>
+            
+                <div class="mb-4">
+                    <label for="totalpembayaran">Total pembayaran</label>
+                    <div id="totalpembayaran" data-nominal=""> </div>
+                    <input type="hidden" id="nominal">
+
+                </div>
+
+                <label for="metode_pembayaran">Metode pembayaran</label>
+                <select name="metode_pembayaran" id="metode_pembayaran" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Pilih Metode Pembayaran</option>
+                    <option value="a9c2f9e6-5d3a-4f7b-9e0e-3c6d5f8e1b2c">GoPay</option>
+                    <option value="c7d3e8f9-6b4c-4a8d-af1e-4d5e6f7e8f9a">BCA</option>
+                    <option value="d8e4f0a1-7c5d-4b9e-b0af-5e6f7e8f9a0b">Mandiri</option>
+                    <option value="e9f5a1b2-8d6e-4c0f-c1b0-6f7e8f9a0b1c">BNI</option>
+                    <option value="f0a6b2c3-9e7f-4d1f-d2c1-7e8f9a0b1c2d">ShopeePay</option>
+                    <option value="f3bdee97-1a7b-4d8f-b8c0-2a7cba2677cb">Mypay</option>
+                </select>
+            </form>
+        </div>
+        <div class="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2 p-6 border-t border-gray-200 rounded-b justify-center md:justify-end">
+            <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" id="cancelButton">Cancel</button>
+            <button type="button" class="bg-indigo-700 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg " id="submitButton">Save</button>
+        </div>
+    </div>
+</div>
+
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
         <!-- Subcategory and Category Titles -->
@@ -26,16 +83,15 @@
                     </div>
                     {% if is_pelanggan %}
                     <div>
-                        <a href="#" class="py-2 px-4 font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition duration-300">
+                        <button data-idkategorijasa="{{sesi.0}}" data-sesi="{{sesi.1}}" data-nominal="{{sesi.2}}" class="pesan-jasa py-2 px-4 font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition duration-300">
                             Pesan Sekarang
-                        </a>
+                        </button>
                     </div>
                     {% endif %}
                 </div>
                 {% endfor %}
             </div>
         </div>
-
 
         <!-- Pekerja Section -->
         <div>
@@ -65,5 +121,129 @@
     </div>
     {% include 'testimoni.html' %}
 </div>
+
+<script>
+    const modal = document.getElementById('crudModal');
+    const modalContent = document.getElementById('crudModelContent');
+
+    const pesanJasaButton = document.querySelectorAll('.pesan-jasa');
+    const totalPembayarancontainer = document.getElementById('totalpembayaran')
+    let totalPembayaran;
+    pesanJasaButton.forEach(button => {
+        button.addEventListener('click', function() {
+            showModal();
+            totalPembayaran = button.getAttribute('data-nominal');
+            totalPembayarancontainer.innerHTML = ``;
+            const textTotalPembayaran = document.createElement('p');
+            textTotalPembayaran.textContent = `Rp ${totalPembayaran}`;
+            totalPembayarancontainer.appendChild(textTotalPembayaran);
+            document.getElementById('nominal').value = totalPembayaran;
+            document.getElementById('idkategorijasa').value = button.getAttribute('data-idkategorijasa')
+            document.getElementById('sesi').value = button.getAttribute('data-sesi')
+            giveEventListener();
+        });        
+    });
+
+    function showModal() {
+        const modal = document.getElementById('crudModal');
+        const modalContent = document.getElementById('crudModalContent');
+
+        modal.classList.remove('hidden'); 
+        setTimeout(() => {
+            modalContent.classList.remove('opacity-0', 'scale-95');
+            modalContent.classList.add('opacity-100', 'scale-100');
+        }, 50); 
+    }
+
+    function hideModal() {
+
+        const modal = document.getElementById('crudModal');
+        const modalContent = document.getElementById('crudModalContent');
+
+        modalContent.classList.remove('opacity-100', 'scale-100');
+        modalContent.classList.add('opacity-0', 'scale-95');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 150); 
+    }
+    document.getElementById("cancelButton").addEventListener("click", hideModal);
+    document.getElementById("closeModalBtn").addEventListener("click", hideModal);
+    document.getElementById('diskon').addEventListener('change', fetchDiskon);
+    
+    function fetchDiskon(){
+        
+        const url = "{% url 'hijau:check_diskon' %}"
+        const nominal = document.getElementById('nominal').value;
+        const kode = document.getElementById('diskon').value;
+        
+        fetch(url, {
+            method: 'POST',
+            headers : {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}' 
+            },
+            body : JSON.stringify({
+                nominal : nominal,
+                kodediskon : kode
+            })
+        })
+        .then (response => response.json())
+        .then (data => {
+            const afterdiskon = totalPembayaran - data.potongan_harga;
+            const textTotalPembayaran = document.createElement('p');
+
+            textTotalPembayaran.textContent = `Rp ${afterdiskon}`;
+            totalPembayarancontainer.innerHTML = ``;
+            totalPembayarancontainer.appendChild(textTotalPembayaran);
+
+            document.getElementById('nominal').value = afterdiskon;
+
+            if (afterdiskon == totalPembayaran){
+                document.getElementById('diskon').value = '';
+                alert('diskon tidak ditemukan')
+            }
+        })
+        
+    }
+    function giveEventListener(){
+        const submitButton = document.getElementById('submitButton')
+        submitButton.addEventListener('click', function(){
+
+            const url = "{% url 'hijau:add_pemesanan_jasa' %}";
+            const tglpemesanan = document.getElementById('tglpemesanan').value;
+            const nominal = document.getElementById('nominal').value;
+            const kategorijasaid = document.getElementById('idkategorijasa').value;
+            const sesilayanan = document.getElementById('sesi').value;
+            const metodePembayaran = document.getElementById('metode_pembayaran').value;
+            const kodediskon = document.getElementById('diskon').value;
+
+            fetch(url, {
+                method : "POST",
+                headers : {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}' 
+                },
+                body : JSON.stringify({
+                    tglpemesanan : tglpemesanan,
+                    totalbiaya : nominal,
+                    idkategorijasa : kategorijasaid,
+                    sesi : sesilayanan,
+                    iddiskon : kodediskon,
+                    idmetodebayar : metodePembayaran
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status == 'success'){
+                    hideModal();
+
+                }
+            })
+        })
+    }
+    
+    
+</script>
 {% endif %}
 {% endblock content %}

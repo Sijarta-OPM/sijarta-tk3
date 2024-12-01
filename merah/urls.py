@@ -9,6 +9,6 @@ urlpatterns = [
     path('payment/', payment, name="payment"),
     path('topup/', topup, name="topup"),
     path('withdraw/', withdraw, name="withdraw"),
-    path('api/get-order/<uuid:id>', get_order, name="get_order"),
+    path('api/get-order', get_order, name="get_order"),
     path('', view_mypay, name='show_mypay')
 ]

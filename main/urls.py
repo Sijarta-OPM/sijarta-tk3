@@ -15,5 +15,5 @@ urlpatterns=[
     path('api/get-pemesanan/', get_pemesanan, name="get_pemesanan"),
     path('api/get-status-pemesanan/', get_status_pemesanan, name="get_stasus_pemesanan"),
     path('api/kerjakan-pemesanan-jasa/', kerjakan_pemesesanan_jasa),
-    path('api/update-state-pemesanan/', update_status_pemesanan, name="update_status_pemesanan")
+    path('api/update-status-pemesanan/', update_status_pemesanan, name="update_status_pemesanan")
 ]

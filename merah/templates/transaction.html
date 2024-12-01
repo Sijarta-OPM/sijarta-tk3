@@ -60,7 +60,18 @@
             `;
         }
         else if (this.value == 'Payment'){
-            fetchData().then(result => {
+            const url = "{% url 'merah:get_order'%}"
+            fetch(url, {
+                method : 'POST',
+                headers : {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}' 
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.data);
+                
                 const paymentForm = document.createElement('form');
                 paymentForm.method = 'POST';
                 paymentForm.action = "{%url 'mypay:payment' %}";
@@ -88,10 +99,10 @@
                 totalPaymentDisplay.id = 'total-payment-display';
                 totalPaymentDisplay.className = 'text-gray-700 font-semibold mb-4';
             
-                result.data.forEach(item => {
+                data.data.forEach(item => {
                     const option = document.createElement('option');
                     option.value = JSON.stringify(item);
-                    option.textContent = `${item.namasubkategori} - ${item.namapekerja} (${item.sesi})`;
+                    option.textContent = `${item[3]} - ${item[4]}`;
                     select.appendChild(option);
                 });
 
@@ -110,9 +121,10 @@
                 // Event listener for select
                 select.addEventListener('change', (e) => {
                     if (e.target.value) {
-                        const selectedItem = JSON.parse(e.target.value);
-                        hiddenInput.value = selectedItem.idpemesanan;
-                        totalPaymentDisplay.innerHTML = `Total: Rp ${selectedItem.total}`;
+                        console.log(e.target);
+                        const selectedOrder = JSON.parse(e.target.value)
+                        hiddenInput.value = selectedOrder[0]
+                        totalPaymentDisplay.innerHTML = `Total: Rp ${selectedOrder[5]}`;
                     } else {
                         hiddenInput.value = '';
                         totalPaymentDisplay.innerHTML = '';
@@ -198,15 +210,5 @@
         }
     });
     
-    async function fetchData() {
-        try {
-            const response = await fetch('/mypay/api/get-order/{{user.0}}');
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Error:', error);
-            throw error;
-        }
-    }
 </script>
 {% endblock content %}

@@ -1,5 +1,9 @@
 from django.shortcuts import render, redirect
-from django.db import connection
+from django.db import connection, IntegrityError, DatabaseError
+from main.views import get_user, get_pekerja, get_pelanggan
+from django.http import JsonResponse
+import uuid
+import json
 # Create your views here.
 
 def view_subkategori_jasa(request, id):
@@ -22,7 +26,7 @@ def view_subkategori_jasa(request, id):
 
         if not user:
             print("please log in")
-            return redirect('home:login')
+            return redirect('login')
 
         context['user'] = user
 
@@ -135,3 +139,154 @@ def view_subkategori_jasa(request, id):
         
         context['testimoni'] = testimoni
     return render(request, 'subkategori.html', context)
+
+def check_diskon(request):
+    data = json.loads(request.body)
+    potongan_harga = 0
+    nominal = float(data.get('nominal').strip())
+    kodediskon = data.get('kodediskon')
+    user = get_user(request.session['sessionId'])
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            select * from public.diskon
+            where kode = %s and mintrpemesanan < %s
+            ''', [kodediskon, nominal]
+        )
+        diskon = cursor.fetchone()
+        if (diskon):
+            cursor.execute(
+                '''
+                select 
+                    * 
+                from 
+                    public.promo p
+                join
+                    public.diskon d
+                on
+                    p.kode = d.kode
+                where 
+                    p.kode = %s
+                    and tglakhirberlaku > CURRENT_DATE
+                ''',[kodediskon]
+            )
+            tipe_diskon = cursor.fetchone()
+            if (not tipe_diskon):
+                cursor.execute(
+                    '''
+                    select 
+                        * 
+                    from 
+                        public.tr_pembelian_voucher pv
+                    join 
+                        public.diskon d
+                    on
+                        d.kode = pv.idvoucher
+
+                    where 
+                        pv.idvoucher = %s
+                        and idpelanggan = %s
+                    ''', [kodediskon, user[0]]
+                )
+                tipe_diskon = cursor.fetchone()
+                if (tipe_diskon):
+                    dipake = int(tipe_diskon[3]) + 1
+                    try:
+                        cursor.execute(
+                            '''
+                            update
+                                public.tr_pembelian_voucher
+                            set
+                                telahdigunakan = %s
+                            where
+                                idvoucher = %s
+                            ''', [dipake,kodediskon]
+                        )
+                        print(tipe_diskon)
+                        potongan_harga = float(diskon[1]) /100 * nominal
+                    except Exception as e:
+                        print(e)
+                        potongan_harga = 0
+            else:
+                potongan_harga = float(diskon[1])/100 * nominal       
+        
+    return JsonResponse({
+        'status' : 'success',
+        'potongan_harga' : potongan_harga
+    })
+def add_pemesanan_jasa(request):
+   
+    user = get_user(request.session['sessionId'])
+    if not user:
+        return redirect('login')
+    # maybe make sure they are pelanggan, but it can be done later
+    pelanggan = get_pelanggan(user[0])
+    if not pelanggan:
+        return redirect('home')
+    
+    data = json.loads(request.body)
+
+    id = uuid.uuid4()
+    tglpemesanan = data.get('tglpemesanan')
+    totalbiaya = data.get('totalbiaya')
+    idpelanggan = user[0]
+    idkategorijasa = data.get('idkategorijasa')
+    sesi = data.get('sesi')
+    iddiskon = data.get('iddiskon')
+    idmetodebayar = data.get('idmetodebayar')
+    orderstatus = False
+    print("id ",id)
+    print("tglpemesanan ", tglpemesanan)
+    print("totalbiaya ", totalbiaya)
+    print("idpelanggan ", idpelanggan)
+    print("idkategorijasa ", idkategorijasa)
+    print("sesi ", sesi)
+    print("iddiskon ",iddiskon)
+    print("idmetodebayar ",idmetodebayar)
+    if float(user[7]) < float(totalbiaya):
+        orderstatus = False
+    else:
+        orderstatus = True
+        connection.cursor().execute(
+            '''
+            insert into public.tr_pemesanan_jasa
+            (
+                id, tglpemesanan, totalbiaya,
+                idpelanggan, idkategorijasa, 
+                sesi, idmetodebayar
+            )
+            values
+            (
+                %s, %s, %s,
+                %s, %s,
+                %s, %s
+            )
+            '''
+            , [
+                id, tglpemesanan, totalbiaya,
+                idpelanggan, idkategorijasa,
+                sesi, idmetodebayar
+            ]
+        )
+        connection.cursor().execute(
+            '''
+            insert into public.tr_pemesanan_status
+            values
+            (%s, %s, %s)
+            ''', [id, '3fa85f64-5717-4562-b3fc-2c963f66afa6', tglpemesanan]
+        )
+        if (iddiskon):
+            connection.cursor().execute(
+                '''
+                update
+                    public.tr_pemesanan_jasa
+                set
+                    iddiskon = %s
+                where
+                    id = %s
+                ''', [iddiskon, id]
+            )
+    return JsonResponse({
+        'status' : 'success',
+        'orderstatus' : orderstatus
+    })

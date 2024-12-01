@@ -508,8 +508,7 @@ def get_pemesanan(request):
                     pelanggan.id = pj.idpelanggan
                 where 
                     ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
-                    and pj.idpekerja = %s
-                ''',[user[0]]
+                '''
             )
             result = cursor.fetchall()
         else:
@@ -542,9 +541,8 @@ def get_pemesanan(request):
                     pelanggan.id = pj.idpelanggan
                 where 
                     ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
-                    and pj.idpekerja = %s
                     and kj.id = %s
-                ''',[user[0], kategori ]
+                ''',[kategori ]
             )
             if (subkategori):
                 cursor.execute(
@@ -578,10 +576,9 @@ def get_pemesanan(request):
 
                 where 
                     ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
-                    and pj.idpekerja = %s
                     and kj.id = %s
                     and skj.id = %s
-                ''',[user[0], kategori, subkategori ]
+                ''',[kategori, subkategori ]
             )
                 
                 
@@ -720,6 +717,16 @@ def kerjakan_pemesesanan_jasa(request):
                 idtrpemesanan = %s
                 and idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
             ''', [idtrpemesanan]
+        )
+        cursor.execute(
+            '''
+            update public.tr_pemesanan_jasa
+            set 
+                idpekerja = %s,
+                tglpekerjaan = NOW()
+            where 
+                id = %s
+            ''', [user[0], idtrpemesanan]
         )
     return JsonResponse({
         'status' : 'success' 
@@ -903,6 +910,7 @@ def update_status_pemesanan(request):
         select public.update_status(%s);
         ''', [idtrpemesanan]
     )
+    
     return JsonResponse({
         'status' : 'success'
     })
