@@ -26,7 +26,7 @@ def view_subkategori_jasa(request, id):
 
         if not user:
             print("please log in")
-            return redirect('login')
+            return redirect('home')
 
         context['user'] = user
 
@@ -218,7 +218,7 @@ def add_pemesanan_jasa(request):
    
     user = get_user(request.session['sessionId'])
     if not user:
-        return redirect('login')
+        return redirect('home')
     # maybe make sure they are pelanggan, but it can be done later
     pelanggan = get_pelanggan(user[0])
     if not pelanggan:
@@ -289,4 +289,50 @@ def add_pemesanan_jasa(request):
     return JsonResponse({
         'status' : 'success',
         'orderstatus' : orderstatus
+    })
+
+def get_already_join(request):
+    user = get_user(request.session['sessionId'])
+    if (not user):
+        return redirect('home')
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            SELECT 
+                *
+            FROM 
+                public.pekerja_kategori_jasa 
+            WHERE
+                pekerjaid = %s
+            ''', [user[0]]
+        )
+        if (cursor.fetchone()):
+            is_registered = True
+    return JsonResponse({
+        'status' : 'success',
+        'is_registered' : is_registered
+    })
+
+def gabungkan_pekerja(request):
+    user = get_user(request.session['sessionId'])
+    data = json.loads(request.body)
+
+    kategori_jasa = data.get('kategorijasa')
+    if (not user):
+        return redirect('home')
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute(
+                '''
+                insert into public.pekerja_kategori_jasa
+                values (%s, %s)
+                ''', [user[0], kategori_jasa]
+            )
+        except DatabaseError:
+            return JsonResponse({
+                'status' : 'failed'
+            })
+    return JsonResponse({
+        'status' : 'success'
     })

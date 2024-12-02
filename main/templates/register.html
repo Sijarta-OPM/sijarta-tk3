@@ -1,6 +1,108 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>
-    this is register
-</h1>
+<div class="container mx-auto px-4 py-8">
+    <div id="registrationType" class="flex flex-col space-y-4 max-w-md mx-auto">
+        <button onclick="showCustomerForm()" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+            Registrasi Sebagai Pelanggan
+        </button>
+        <button onclick="showWorkerForm()" class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">
+            Registrasi Sebagai Pekerja
+        </button>
+    </div>
+
+    <form id="customerForm" class="hidden max-w-md mx-auto mt-8 space-y-4" onsubmit="return submitCustomerForm(event)">
+        <h2 class="text-2xl font-bold text-center">Registrasi Pelanggan</h2>
+        <input type="text" name="nama" placeholder="Nama" required class="w-full p-2 border rounded">
+        <input type="password" name="password" placeholder="Password" required class="w-full p-2 border rounded">
+        <select name="jenisKelamin" required class="w-full p-2 border rounded">
+            <option value="">Pilih Jenis Kelamin</option>
+            <option value="L">Laki-laki</option>
+            <option value="P">Perempuan</option>
+        </select>
+        <input type="tel" name="noHp" placeholder="Nomor HP" pattern="[0-9]+" required class="w-full p-2 border rounded">
+        <textarea name="alamat" placeholder="Alamat" required class="w-full p-2 border rounded"></textarea>
+        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Daftar</button>
+    </form>
+
+    <form id="workerForm" class="hidden max-w-md mx-auto mt-8 space-y-4" onsubmit="return submitWorkerForm(event)">
+        <h2 class="text-2xl font-bold text-center">Registrasi Pekerja</h2>
+        <input type="text" name="nama" placeholder="Nama" required class="w-full p-2 border rounded">
+        <input type="password" name="password" placeholder="Password" required class="w-full p-2 border rounded">
+        <select name="jenisKelamin" required class="w-full p-2 border rounded">
+            <option value="">Pilih Jenis Kelamin</option>
+            <option value="L">Laki-laki</option>
+            <option value="P">Perempuan</option>
+        </select>
+        <input type="tel" name="noHp" placeholder="Nomor HP" pattern="[0-9]+" required class="w-full p-2 border rounded">
+        <textarea name="alamat" placeholder="Alamat" required class="w-full p-2 border rounded"></textarea>
+        <input type="text" name="namaBank" placeholder="Nama Bank" required class="w-full p-2 border rounded">
+        <input type="tel" name="noRekening" placeholder="Nomor Rekening" pattern="[0-9]+" required class="w-full p-2 border rounded">
+        <input type="tel" name="npwp" placeholder="NPWP" pattern="[0-9]+" required class="w-full p-2 border rounded">
+        <input type="url" name="urlFoto" placeholder="URL Foto" required class="w-full p-2 border rounded">
+        <button type="submit" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">Daftar</button>
+    </form>
+</div>
+<script>
+    function showCustomerForm() {
+        document.getElementById('registrationType').classList.add('hidden');
+        document.getElementById('customerForm').classList.remove('hidden');
+    }
+    
+    function showWorkerForm() {
+        document.getElementById('registrationType').classList.add('hidden');
+        document.getElementById('workerForm').classList.remove('hidden');
+    }
+    
+    function submitCustomerForm(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Add your submission logic here
+        console.log('Customer Registration Data:', data);
+        
+        // Example: Send data to server
+        fetch('/register/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}' 
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            alert('Registrasi Pelanggan Berhasil');
+        })
+        .catch(error => {
+            alert('Registrasi Gagal: ' + error);
+        });
+    }
+    
+    function submitWorkerForm(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Add your submission logic here
+        console.log('Worker Registration Data:', data);
+        
+        // Example: Send data to server
+        fetch('/register/', {
+            method: 'POST',
+            headers : {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}' 
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            alert('Registrasi Pekerja Berhasil');
+        })
+        .catch(error => {
+            alert('Registrasi Gagal: ' + error);
+        });
+    }
+    </script>
 {% endblock content %}

@@ -17,6 +17,18 @@ def create_session(request, userId):
     request.session['sessionId'] = str(sessionId)
 
 def register(request):
+    if (request.method == 'POST'):
+        data = json.loads(request.body)
+        
+        with connection.cursor() as cursor:
+            cursor.execute(
+                '''
+                
+                '''
+            )
+        return JsonResponse({
+            'status' : 'success'
+        })        
     return render(request, 'register.html')
 
 def login(request):

@@ -112,7 +112,7 @@
             </div>
         </div>
         {% if not is_pelanggan %}
-        <div>
+        <div id="join-button">
             <button type="button" id="search-button" class="w-full mt-4 px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 Gabung Sekarang
             </button>
@@ -123,6 +123,53 @@
 </div>
 
 <script>
+
+    fetch("{% url 'hijau:get_already_join'%}", {
+        method : 'POST',
+        headers : {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}' 
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const searchbutton = document.getElementById('search-button')
+        console.log(data);
+        
+        if (data['is_registered']){
+            searchbutton.addEventListener('click', gabungkanpekerja);
+        }
+        else {
+            searchbutton.addEventListener('click', function(){
+                console.log("hai cantik")
+            })
+        }
+    })
+
+    function gabungkanpekerja() {
+        const kategorijasaid = "{{kategori_jasa.0}}"
+        fetch("{% url 'hijau:gabungkan_pekerja' %}", {
+            method : "POST",
+            headers : {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body : JSON.stringify({
+                kategorijasa : kategorijasaid
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data['status'] == 'success'){
+                alert("berhasil menambah pekerja");
+
+            }
+            else {
+                alert("tidak berhasil menambah pekerja");
+                location.reload();
+            }
+        })
+    }
     const modal = document.getElementById('crudModal');
     const modalContent = document.getElementById('crudModelContent');
 
@@ -242,7 +289,6 @@
             })
         })
     }
-    
     
 </script>
 {% endif %}
