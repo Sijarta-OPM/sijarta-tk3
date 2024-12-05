@@ -293,6 +293,7 @@ def add_pemesanan_jasa(request):
 
 def get_already_join(request):
     user = get_user(request.session['sessionId'])
+    is_registered = False
     if (not user):
         return redirect('home')
 
@@ -309,6 +310,7 @@ def get_already_join(request):
         )
         if (cursor.fetchone()):
             is_registered = True
+    
     return JsonResponse({
         'status' : 'success',
         'is_registered' : is_registered

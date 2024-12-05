@@ -136,12 +136,12 @@
         const searchbutton = document.getElementById('search-button')
         console.log(data);
         
-        if (data['is_registered']){
+        if (!data['is_registered']){
             searchbutton.addEventListener('click', gabungkanpekerja);
         }
         else {
             searchbutton.addEventListener('click', function(){
-                console.log("hai cantik")
+                alert('already registered')
             })
         }
     })

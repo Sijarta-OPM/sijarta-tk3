@@ -4,7 +4,7 @@ from .models import *
 from django.core import serializers
 import json
 from django.http import JsonResponse
-from django.db import connection
+from django.db import connection, DatabaseError
 import uuid
 
 def create_session(request, userId):
@@ -18,16 +18,64 @@ def create_session(request, userId):
 
 def register(request):
     if (request.method == 'POST'):
+        id = uuid.uuid4()
         data = json.loads(request.body)
-        
-        with connection.cursor() as cursor:
-            cursor.execute(
-                '''
-                
-                '''
-            )
+        nama = data.get('nama')
+        jeniskelamin = data.get('jeniskelamin')
+        nohp = data.get('nohp')
+        print(nohp)
+        pwd = data.get('pwd')
+        tgllahir = data.get('tgllahir')
+        alamat = data.get('alamat')
+        is_pelanggan = data.get('is_pelanggan')
+        print(is_pelanggan)
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    '''
+                    insert into public.user (
+                    id, nama, jeniskelamin, nohp, pwd, tgllahir, alamat, saldomypay
+                    )
+                    values 
+                    (%s, %s, %s, %s, %s, %s, %s, 0)
+                    ''', [id, nama, jeniskelamin, nohp, pwd, tgllahir, alamat]
+                )
+                if (is_pelanggan == 'true'):
+                    cursor.execute(
+                        '''
+                        insert into public.pelanggan (id, level)
+                        values (%s, 'Basic')
+                        ''', [id]
+                    )
+                else :
+                    namabank = data.get('namabank')
+                    print(namabank)
+                    nomorrekening = data.get('nomorrekening')
+                    print(nomorrekening)
+                    npwp = data.get('npwp')
+                    print(npwp)
+                    linkfoto = data.get('linkfoto')
+                    print(linkfoto)
+                    with connection.cursor() as cursor:
+                        print("HELLO")
+                        cursor.execute( 
+                            '''
+                            insert into public.pekerja
+                            values (%s, %s, %s, %s, %s, 0, 0)
+                            ''', [id, namabank, nomorrekening, npwp, linkfoto]
+                        )
+                        cursor.execute(
+                            '''
+                            select * from public.pekerja where id = %s
+                            ''', [id]
+                        )
+                        print(cursor.fetchone())
+            created = True
+        except DatabaseError:
+            created = False
         return JsonResponse({
-            'status' : 'success'
+            'status' : 'success',
+            'created' : created
         })        
     return render(request, 'register.html')
 
@@ -109,11 +157,12 @@ def show_homepage(request):
                     # load kategori jasa and subkategori
                     cursor.execute(
                         """
-                        select * from public.kategori_jasa
+                        select * 
+                        from public.kategori_jasa
                         """
                     )
                     kategori_jasa = cursor.fetchall()
-
+                    print(kategori_jasa)
                     subkategori_by_kategori = {}
                     for kategori in kategori_jasa:
                         cursor.execute("""
@@ -124,6 +173,7 @@ def show_homepage(request):
                         subkategori_by_kategori[kategori[0]] = subkategori_jasa
 
                     context['kategori_jasa'] = kategori_jasa
+
                     context['subkategori_jasa'] = subkategori_by_kategori
 
                     return render(request, 'homepage.html', context)
@@ -411,15 +461,18 @@ def view_pemesanan_jasa(request):
                             public.kategori_jasa kj
                         on 
                             kj.id = skj.kategorijasaid
+                        join
+                            public.pekerja_kategori_jasa kkj
+                        on 
+                            kkj.kategorijasaid = kj.id
                         where 
                             ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
-                            and pj.idpekerja = %s
+                            and kkj.pekerjaid = %s
                         ''',[user[0]]
                     )
                     pekerjaan_tersedia = cursor.fetchall()
-
                     context['pekerjaan_tersedia'] = pekerjaan_tersedia
-                    
+                    print(pekerjaan_tersedia)
                     # extract kategori pekerjaan
                     kategori_jasa = []
                     for pekerjaan in pekerjaan_tersedia:
@@ -489,7 +542,6 @@ def get_pemesanan(request):
     subkategori = request.GET.get('subkategorijasa', '').strip()
     with connection.cursor() as cursor:
         if (kategori == ""):
-            print(kategori)
             cursor.execute(
                 '''
                 select
@@ -518,9 +570,14 @@ def get_pemesanan(request):
                     public.user pelanggan
                 on 
                     pelanggan.id = pj.idpelanggan
+                join 
+                    public.pekerja_kategori_jasa pkj
+                on
+                    pkj.kategorijasaid = kj.id
                 where 
                     ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
-                '''
+                    and pkj.pekerjaid = %s
+                ''', [user[0]]
             )
             result = cursor.fetchall()
         else:
@@ -551,10 +608,15 @@ def get_pemesanan(request):
                     public.user pelanggan
                 on 
                     pelanggan.id = pj.idpelanggan
+                join 
+                    public.pekerja_kategori_jasa pkj
+                on
+                    pkj.kategorijasaid = kj.id
                 where 
                     ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
                     and kj.id = %s
-                ''',[kategori ]
+                    and pkj.pekerjaid = %s
+                ''',[kategori, user[0]]
             )
             if (subkategori):
                 cursor.execute(
@@ -585,15 +647,17 @@ def get_pemesanan(request):
                     public.user pelanggan
                 on 
                     pelanggan.id = pj.idpelanggan
-
+                join 
+                    public.pekerja_kategori_jasa pkj
+                on
+                    pkj.kategorijasaid = kj.id
                 where 
                     ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
                     and kj.id = %s
                     and skj.id = %s
-                ''',[kategori, subkategori ]
+                    and pkj.pekerjaid = %s
+                ''',[kategori, subkategori, user[0]]
             )
-                
-                
             result = cursor.fetchall()
         print(result)
         return JsonResponse({
@@ -606,11 +670,7 @@ def get_subkategori_pemesanan(request):
     if (not user):
         return redirect('login')
     idkategorijasa = request.GET.get('idKategoriJasa','').strip()
-    print("id pekerja: ", user[0])
-    print("kategori id ", idkategorijasa)
 
-    query = ""
-    subkategori = ""
     
     with connection.cursor() as cursor:
         if (idkategorijasa):
@@ -636,16 +696,18 @@ def get_subkategori_pemesanan(request):
                     kj.id = skj.kategorijasaid
                 where 
                     ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
-                    and pj.idpekerja = %s
                     and kj.id = %s
-                ''', [user[0], idkategorijasa]
-            
+                ''', [idkategorijasa]
             )
             subkategori = cursor.fetchall()
-        return JsonResponse({
-            'status' : 'success',
-            'data' : subkategori
-        }, safe=False)
+            return JsonResponse({
+                'status' : 'success',
+                'data' : subkategori
+            }, safe=False)
+        else:
+            return JsonResponse({
+                'status' : 'success'
+            })
 
 
 def get_user(sessionId):
@@ -745,6 +807,7 @@ def kerjakan_pemesesanan_jasa(request):
     })
 
 def get_status_pemesanan(request):
+    pekerja = get_user(request.session['sessionId'])
     data = json.loads(request.body)
     kategori_jasa =  data.get('kategori')
     status_pesanan =  data.get('status')
@@ -784,11 +847,10 @@ def get_status_pemesanan(request):
                             ('3fa85f64-5717-4562-b3fc-2c963f66afa6', 
                             '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3', 
                             'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9')
-                        
-                        '''
+                            and pj.idpekerja = %s
+                        ''', [pekerja[0]]
                     )
                     result = cursor.fetchall()
-                    print('hey this is executed and its true')
             else:
                 cursor.execute(
                     '''
@@ -820,7 +882,8 @@ def get_status_pemesanan(request):
                         sp.id = ps.idstatus
                     where
                         ps.idstatus = %s
-                    ''',[status_pesanan]
+                        and pj.idpekerja = %s
+                    ''',[status_pesanan, pekerja[0]]
                 )
                 result = cursor.fetchall()
         else:
@@ -859,7 +922,8 @@ def get_status_pemesanan(request):
                     where
                         ps.idstatus = %s
                         and kj.id = %s
-                    ''', [status_pesanan, kategori_jasa]
+                        and pj.idpekerja = %s
+                    ''', [status_pesanan, kategori_jasa, pekerja[0]]
                 )
                 result = cursor.fetchall()
             else:
@@ -902,7 +966,8 @@ def get_status_pemesanan(request):
                         '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3', 
                         'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
                         )
-                    ''', [kategori_jasa]
+                        and pj.idpekerja = %s
+                    ''', [kategori_jasa, pekerja[0]]
                 )
                 result = cursor.fetchall()
     return JsonResponse({

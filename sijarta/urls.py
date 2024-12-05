@@ -21,5 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('main.urls')),
     path('subkategori/', include('hijau.urls', namespace='subkategori')),
-    path('mypay/', include('merah.urls', namespace='mypay'))
+    path('mypay/', include('merah.urls', namespace='mypay')),
+    path('biru/', include('biru.urls',  namespace='biru'))
 ]

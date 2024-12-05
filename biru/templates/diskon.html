@@ -1,6 +1,88 @@
-{% include 'base.html' %}
-{% block content %}
-<h1> DISKON </h1>
+{% extends 'base.html' %}
+{% load static %}
 
-<h1> PROMO </h1>
+{% block content %}
+<div class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="p-6">
+                <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">VOUCHER</h1>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    {% for v in voucher %}
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 transform transition hover:scale-105">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-semibold text-gray-700">Kode:</span>
+                                <span class="text-sm font-bold text-blue-600">{{ v.0 }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Hari Aktif:</span>
+                                <span class="text-blue-500">{{ v.1 }} hari</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Minimal Pembelian:</span>
+                                <span class="text-green-600">Rp {{ v.2 }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Potongan:</span>
+                                <span class="text-red-500">{{ v.3 }}%</span>
+                            </div>
+                            <button data-kode-voucher="{{v.0}}" data-harga-voucher="{{v.3}}" class="beli-voucher w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">
+                                Beli Voucher
+                            </button>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-gray-500">Tidak ada voucher tersedia</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-6">
+                <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">PROMO</h1>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    {% for p in promo %}
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-6 transform transition hover:scale-105">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-semibold text-gray-700">Kode Promo:</span>
+                                <span class="text-sm font-bold text-green-600">{{ p.0 }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Berlaku hingga:</span>
+                                <span class="text-red-500">{{ p.1 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-gray-500">Tidak ada promo tersedia</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.querySelectorAll('.beli-voucher').forEach(button => {
+        button.addEventListener('click', function(){
+            alert('its work');
+            const url = "{% url 'biru:beli_voucher'%}";
+            const kodevoucher = button.getAttribute('data-kode-voucher')
+            const hargavoucher = button.getAttribute('data-harga-voucher')
+            fetch(url, {
+                method : 'POST',
+                headers : {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}' 
+                },
+                body : JSON.stringify({
+                    kode_voucher : kodevoucher,
+                    harga_voucher : hargavoucher
+                })
+            })
+        }) 
+    });
+</script>
 {% endblock content %}

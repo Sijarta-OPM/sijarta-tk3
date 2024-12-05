@@ -93,6 +93,10 @@
                         idtrpemesanan : idpemesanan
                     })
                 })
+                .then(response => response.json())
+                .then(data => {
+                    location.reload()
+                })
                 .catch((error) => {
                     console.error('Error:', error);
                 });
