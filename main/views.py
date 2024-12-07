@@ -1,3 +1,4 @@
+from datetime import date
 from django.shortcuts import render,redirect
 from django.contrib import messages
 from .models import *
@@ -991,3 +992,125 @@ def update_status_pemesanan(request):
     return JsonResponse({
         'status' : 'success'
     })
+
+def kelola_status_pesanan(request, user_id):
+    user = get_user(request.session['sessionId'])
+    if not user or str(user[0]) != str(user_id):
+        return redirect('login')
+
+    # Fetch subcategories for the filter
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT id, namasubkategori
+            FROM public.subkategori_jasa
+        """)
+        subkategori_list = cursor.fetchall()
+
+    # Fetch orders for the user that are currently in progress
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT pj.id, skj.namasubkategori, sl.sesi, pj.totalbiaya, u.nama, sp.status
+            FROM public.tr_pemesanan_jasa pj
+            JOIN (
+                SELECT DISTINCT ON (idtrpemesanan) idtrpemesanan, idstatus
+                FROM public.tr_pemesanan_status
+                ORDER BY idtrpemesanan, tglwaktu DESC
+            ) ps ON pj.id = ps.idtrpemesanan
+            JOIN public.status_pesanan sp ON ps.idstatus = sp.id
+            JOIN public.subkategori_jasa skj ON pj.idkategorijasa = skj.id
+            JOIN public.sesi_layanan sl ON skj.id = sl.subkategoriid
+            LEFT JOIN public.pekerja p ON pj.idpekerja = p.id
+            LEFT JOIN public.user u ON p.id = u.id
+            WHERE pj.idpelanggan = %s AND sp.status IN ('Menunggu Pembayaran', 'Mencari Pekerja Terdekat')
+        """, [user_id])
+        pesanan_list = cursor.fetchall()
+
+    context = {
+        'pesanan_list': pesanan_list,
+        'subkategori_list': subkategori_list,
+        'logged_in': True,
+        'user': user,
+        'is_pelanggan': is_pelanggan(user[0])
+    }
+    return render(request, 'kelola_status_pesanan.html', context)
+def cancel_pesanan(request, id):
+    user = get_user(request.session['sessionId'])
+    if not user:
+        return redirect('login')
+
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            DELETE FROM public.tr_pemesanan_jasa WHERE id = %s AND idpelanggan = %s
+        """, [id, user[0]])
+
+    messages.success(request, 'Pesanan berhasil dibatalkan')
+    return redirect('kelola_status_pesanan', user_id=user[0])
+
+def create_testimoni(request, id):
+    user = get_user(request.session['sessionId'])
+    if not user:
+        return redirect('login')
+        
+    if request.method == 'POST':
+        tgl = date.today()
+        teks = request.POST.get('teks')
+        rating = request.POST.get('rating')
+
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO public.testimoni (idtrpemesanan, tgl, teks, rating)
+                VALUES (%s, %s, %s, %s)
+            """, [id, tgl, teks, rating])
+
+        messages.success(request, 'Testimoni berhasil dibuat')
+        return redirect('kelola_status_pesanan', user_id=user[0])
+
+    context = {
+        'id': id,
+        'ratings': range(1, 11), # should range 1-10
+        'logged_in': True,
+        'user': user,
+        'is_pelanggan': is_pelanggan(user[0])
+    }
+    return render(request, 'create_testimoni.html', context)
+def get_filtered_pesanan(request):
+    user = get_user(request.session['sessionId'])
+    if not user:
+        return redirect('login')
+    
+    status = request.GET.get('status', '').strip()
+    subkategori = request.GET.get('subkategori', '').strip()
+
+    with connection.cursor() as cursor:
+        query = '''
+            SELECT DISTINCT ON (pj.id) pj.id, skj.namasubkategori, sl.sesi, pj.totalbiaya, u.nama, sp.status
+            FROM public.tr_pemesanan_jasa pj
+            JOIN (
+                SELECT DISTINCT ON (idtrpemesanan) idtrpemesanan, idstatus
+                FROM public.tr_pemesanan_status
+                ORDER BY idtrpemesanan, tglwaktu DESC
+            ) ps ON pj.id = ps.idtrpemesanan
+            JOIN public.status_pesanan sp ON ps.idstatus = sp.id
+            JOIN public.subkategori_jasa skj ON pj.idkategorijasa = skj.id
+            JOIN public.sesi_layanan sl ON skj.id = sl.subkategoriid AND sl.sesi = pj.sesi
+            LEFT JOIN public.pekerja p ON pj.idpekerja = p.id
+            LEFT JOIN public.user u ON p.id = u.id
+            WHERE pj.idpelanggan = %s
+        '''
+        params = [user[0]]
+
+        if status:
+            query += ' AND sp.status = %s'
+            params.append(status)
+
+        if subkategori:
+            query += ' AND skj.id = %s'
+            params.append(subkategori)
+
+        cursor.execute(query, params)
+        result = cursor.fetchall()
+
+    return JsonResponse({
+        'status': 'success',
+        'data': result
+    }, safe=False)

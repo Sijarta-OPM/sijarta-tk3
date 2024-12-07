@@ -12,7 +12,7 @@
                     <a href="{%url 'mypay:show_mypay'%}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 text-gray-500 rounded-lg text-lg hover:text-gray-900 transition duration-300">MyPay</a>
                     
                     {% if is_pelanggan %}
-                        <a href="#" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 text-lg text-gray-500 rounded-lg  hover:text-gray-900 transition duration-300">Kelola Pesanan Saya</a>
+                        <a href="{% url 'kelola_status_pesanan' user.0%}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 text-lg text-gray-500 rounded-lg  hover:text-gray-900 transition duration-300">Kelola Pesanan Saya</a>
                         <a href="{% url 'diskon' %}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 text-lg text-gray-500 rounded-lg hover:text-gray-900 transition duration-300">Diskon</a>
                     {% else %}
                         <a href="{% url 'pekerjaan_jasa' %}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 text-lg text-gray-500 rounded-lg hover:text-gray-900 transition duration-300">Kelola Pekerjaan Saya</a>
