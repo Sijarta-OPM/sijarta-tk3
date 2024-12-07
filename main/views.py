@@ -1033,6 +1033,7 @@ def kelola_status_pesanan(request, user_id):
         'is_pelanggan': is_pelanggan(user[0])
     }
     return render(request, 'kelola_status_pesanan.html', context)
+
 def cancel_pesanan(request, id):
     user = get_user(request.session['sessionId'])
     if not user:
@@ -1050,29 +1051,66 @@ def create_testimoni(request, id):
     user = get_user(request.session['sessionId'])
     if not user:
         return redirect('login')
+    
+    # Check if user has permission to create testimoni for this order
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT idpelanggan 
+            FROM public.tr_pemesanan_jasa 
+            WHERE id = %s
+        """, [id])
+        order = cursor.fetchone()
+        if not order or str(order[0]) != str(user[0]):
+            messages.error(request, 'Tidak dapat membuat testimoni untuk pesanan ini')
+            return redirect('kelola_status_pesanan', user_id=user[0])
         
-    if request.method == 'POST':
+    # Check if testimoni already exists
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT COUNT(*) FROM public.testimoni 
+            WHERE idtrpemesanan = %s
+        """, [id])
+        if cursor.fetchone()[0] > 0:
+            messages.error(request, 'Testimoni sudah dibuat sebelumnya')
+            return redirect('kelola_status_pesanan', user_id=user[0])
+    
+    if request.method == 'GET':
+        # Show the testimoni form
+        context = {
+            'id': id,
+            'ratings': range(1, 11),
+            'logged_in': True,
+            'user': user,
+            'is_pelanggan': is_pelanggan(user[0])
+        }
+        return render(request, 'create_testimoni.html', context)
+    
+    elif request.method == 'POST':
         tgl = date.today()
         teks = request.POST.get('teks')
         rating = request.POST.get('rating')
 
         with connection.cursor() as cursor:
-            cursor.execute("""
-                INSERT INTO public.testimoni (idtrpemesanan, tgl, teks, rating)
-                VALUES (%s, %s, %s, %s)
-            """, [id, tgl, teks, rating])
+            try:
+                cursor.execute("BEGIN")
+                cursor.execute("""
+                    INSERT INTO public.testimoni (idtrpemesanan, tgl, teks, rating)
+                    VALUES (%s, %s, %s, %s)
+                """, [id, tgl, teks, rating])
 
-        messages.success(request, 'Testimoni berhasil dibuat')
-        return redirect('kelola_status_pesanan', user_id=user[0])
+                cursor.execute("""
+                    INSERT INTO public.tr_pemesanan_status (idtrpemesanan, idstatus, tglwaktu)
+                    VALUES (%s, '7f9e3b98-9a3c-4f7a-b7e6-7a5e5e3d6f7c', NOW())
+                """, [id])
 
-    context = {
-        'id': id,
-        'ratings': range(1, 11), # should range 1-10
-        'logged_in': True,
-        'user': user,
-        'is_pelanggan': is_pelanggan(user[0])
-    }
-    return render(request, 'create_testimoni.html', context)
+                cursor.execute("COMMIT")
+                messages.success(request, 'Testimoni berhasil dibuat')
+                return redirect('kelola_status_pesanan', user_id=user[0])
+            except DatabaseError as e:
+                cursor.execute("ROLLBACK")
+                print(f"Error creating testimoni: {str(e)}")  # Debug log
+                messages.error(request, 'Gagal membuat testimoni')
+                return redirect('kelola_status_pesanan', user_id=user[0])
 def get_filtered_pesanan(request):
     user = get_user(request.session['sessionId'])
     if not user:
