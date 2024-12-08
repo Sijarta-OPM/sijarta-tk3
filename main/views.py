@@ -1163,10 +1163,13 @@ def edit_profile(request, user_id):
     # Pilihan bank
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT DISTINCT namabank 
-            FROM public.pekerja
-            WHERE namabank IS NOT NULL
-            ORDER BY namabank
+            SELECT DISTINCT nama
+            FROM public.metode_bayar
+            WHERE nama LIKE '%Bank%'
+            OR nama LIKE '%BCA%'
+            OR nama LIKE '%BNI%'
+            OR nama LIKE '%Mandiri%'
+            ORDER BY nama
         """)
         bank_choices = [row[0] for row in cursor.fetchall()]
 
