@@ -214,6 +214,7 @@ def check_diskon(request):
         'status' : 'success',
         'potongan_harga' : potongan_harga
     })
+
 def add_pemesanan_jasa(request):
    
     user = get_user(request.session['sessionId'])
@@ -243,9 +244,41 @@ def add_pemesanan_jasa(request):
     print("sesi ", sesi)
     print("iddiskon ",iddiskon)
     print("idmetodebayar ",idmetodebayar)
+
     if float(user[7]) < float(totalbiaya):
         orderstatus = False
-    else:
+
+    if idmetodebayar != 'f3bdee97-1a7b-4d8f-b8c0-2a7cba2677cb':
+        with connection.cursor() as cursor:
+            cursor.execute(
+                '''
+                insert into public.tr_pemesanan_jasa
+                (
+                    id, tglpemesanan, totalbiaya,
+                    idpelanggan, idkategorijasa, 
+                    sesi, idmetodebayar
+                )
+                values
+                (
+                    %s, %s, %s,
+                    %s, %s,
+                    %s, %s
+                )
+                ''', [
+                    id, tglpemesanan, totalbiaya,
+                    idpelanggan, idkategorijasa,
+                    sesi, idmetodebayar
+                ]
+            )
+            cursor.execute(
+                '''
+                insert into public.tr_pemesanan_status
+                values
+                (%s, %s, %s)
+                ''', [id, '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3', tglpemesanan]
+            )
+
+    if float(user[7] >= float(totalbiaya)): # 
         orderstatus = True
         connection.cursor().execute(
             '''

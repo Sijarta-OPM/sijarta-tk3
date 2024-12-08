@@ -3,6 +3,8 @@ from django.db import connection
 from django.http import JsonResponse
 from main.views import get_user, get_pelanggan, get_pekerja, logout
 import json
+import uuid
+
 # Create your views here.
 def show_diskon_page(request):
     user = get_user(request.session['sessionId'])
@@ -18,14 +20,22 @@ def show_diskon_page(request):
     
     voucher = get_voucher()
     promo = get_promo()
-
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            select * from public.metode_bayar
+            '''
+        )
+        metode_bayar = cursor.fetchall()
+    
     context = {
         'logged_in' : True,
         'user' : user,
         'role' : role,
         'is_pelanggan' : is_pelanggan,
         'voucher' : voucher,
-        'promo' : promo
+        'promo' : promo,
+        'metode_bayar' : metode_bayar
     }
     return render(request, 'diskon.html', context)
 
@@ -54,27 +64,57 @@ def beli_voucher(request):
     pelanggan = get_pelanggan(user[0])
     if (not pelanggan):
         return redirect('home')
-    # we will perform insert query on public.tr_pembelian_voucher
-    # beli_voucher should be call if the request method is POST, so to get data from body
-    # we are expecting voucher code, user's id, and 
-    # if user fill with 
     data = json.loads(request.body)
 
-    kode = data.get('kodevoucher')
+    kode = data.get('kode_voucher')
     harga_voucher = data.get('harga_voucher')
-    saldo_user = user[7]
-    if (harga_voucher > saldo_user):
-        return JsonResponse({
-            'status' : 'success',
-            'buy_status' : 'failed'
-        })
-    else:
+    metode_bayar = data.get('payment_method')
+
+    success = False
+    print(kode)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            select * from public.voucher where kode = %s
+            ''', [kode]
+        )
+        voucher = cursor.fetchone()
+
+    if metode_bayar != 'f3bdee97-1a7b-4d8f-b8c0-2a7cba2677cb':
+        success = True
         with connection.cursor() as cursor:
             cursor.execute(
                 '''
-                insert into public.tr_pembelian_voucher
-                values (%s, %s, %s, %s, %s, %s, %s)
-                ''', []
+                insert into public.tr_pembelian_voucher(id, tglawal, tglakhir, telahdigunakan, idpelanggan, idvoucher, idmetodebayar)
+                values (
+                    %s, NOW(), NOW() + INTERVAL %s , 0, %s, %s, %s
+                )
+                ''', [str(uuid.uuid4()),   f'{voucher[1]} days', user[0], kode, metode_bayar ]
             )
+    else:
+        saldo_user = user[7]
+        if float(saldo_user) >= float(harga_voucher):
+            success = True
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    '''
+                    insert into public.tr_pembelian_voucher
+                    values (
+                        %s, NOW(), NOW() + INTERVAL %s , 0, %s, %s, %s
+                    )
+                    ''', [uuid.uuid4(), f'{voucher[1]} days', user[0], kode, metode_bayar ]
+                )
+                cursor.execute(
+                    '''
+                    update public.user
+                    set saldomypay = saldomypay - %s
+                    where id = %s
+                    ''', [harga_voucher, user[0]]
+                )
+    return JsonResponse({
+        'status' : 'success',
+        'buy_status' : success,
+        'voucher' : voucher
+    })
 
 
