@@ -3,22 +3,23 @@
 {% block content %}
 
 {% if logged_in %}
-    <div class="min-h-screen bg-gray-50 p-8">
+    <div class="min-h-screen bg-gradient-to-br from-[#3163ea] to-[#eff6ff] p-8">
         <div class="max-w-5xl mx-auto">
-            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 class="text-3xl text-center font-bold mb-6">Pencarian Jasa</h2>
+            <div class="bg-white/30 backdrop-blur-md p-8 rounded-2xl shadow-2xl">
+                <h2 class="text-3xl text-center font-bold text-gray-800 mb-6">Pencarian Jasa</h2>
                 
-                <div class="space-y-4">
-                    <!-- First Dropdown -->
+                <div class="space-y-6">
+                    <!-- Pencarian Kategori -->
                     <form id="search-subkategori-form">
-                        <div class="space-y-2">
+                        <div class="space-y-4">
+                            <!-- Kategori Jasa -->
                             <label for="kategori-jasa" class="block text-sm font-medium text-gray-700">
                                 Kategori Jasa
                             </label>
                             <select
                                 id="kategori-jasa"
                                 name="kategori-jasa"
-                                class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                class="block w-full px-5 py-3 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                             >
                                 <option value="">Semua Kategori</option>
                                 {% if kategori_jasa %}
@@ -29,47 +30,46 @@
                             </select>
                         </div>
                         
-                        <!-- delete Second Dropdown because its supposed to be search -->
-                        <label 
-                        for="text"
-                        class="block text-gray-700 font-medium mb-2"
-                        >Subkategori Jasa</label>
+                        <!-- Subkategori Jasa -->
+                        <label for="subkategori-jasa" class="block text-sm font-medium text-gray-700 mb-4"> <!-- Add mb-4 for margin-bottom -->
+                            Subkategori Jasa
+                        </label>
                         <input 
-                        id="subkategori-jasa"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        type="text"
-                        placeholder="Subkategori jasa">
-                        
-                        <!-- Search Button -->
-                        <button 
-                        type="submit" 
-                        id="search-button"
-                        class="w-full mt-4 px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            id="subkategori-jasa"
+                            class="w-full px-5 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            type="text"
+                            placeholder="Cari Subkategori Jasa"
                         >
-                        Search
-                    </button>
+                        
+                        <!-- Tombol Search -->
+                        <button 
+                            type="submit" 
+                            id="search-button"
+                            class="w-full mt-4 px-4 py-2 bg-[#3163ea] text-white font-medium rounded-md hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            Cari
+                        </button>
+                    </form>
                 </div>
-            </div>
-        </form>
 
-            <div id="queryResult" class="pt-6" data-url-pattern="{% url 'subkategori:show_subkategori' '00000000-0000-0000-0000-000000000000' %}">
-                <!-- Initial content will be loaded by JavaScript -->
+                <div id="queryResult" class="pt-6" data-url-pattern="{% url 'subkategori:show_subkategori' '00000000-0000-0000-0000-000000000000' %}">
+                    <!-- Hasil Pencarian akan muncul di sini -->
+                </div>
             </div>
         </div>
     </div>
 
     <script>                
-        // Search button functionality
-        const kategoriSelect = document.getElementById('')
-        const searchSubkategoriForm = document.getElementById('search-subkategori-form')
+        // Fungsi untuk Pencarian Jasa
+        const searchSubkategoriForm = document.getElementById('search-subkategori-form');
+        const queryResult = document.getElementById('queryResult');
 
         searchSubkategoriForm.addEventListener('submit', function(e){
             e.preventDefault();
 
             const selectedKategoriJasa = document.getElementById('kategori-jasa').value;
             const querySubkategoriJasa = document.getElementById('subkategori-jasa').value;
-            queryResult.innerHTML = '';
-            
+            queryResult.innerHTML = '';  // Clear previous results
             
             const url = '/api/search-subkategori/';
             fetch(url, {
@@ -85,42 +85,18 @@
             })
             .then(response => response.json())
             .then(data => {
-                // after getting the result, then show the result in div with id query result
-                // but what kind of result we suppose to get
-                // data that is fetched is in json format
-                // console.log(data.data);
                 for (const key in data.data){
-                    // console.log(key, data.data[key])
-                    renderKategoriCard(key, data.data[key])
-                    data.data[key].forEach(element => {
-                        console.log(element['namasubkategori']);
-                        
-                    });
+                    renderKategoriCard(key, data.data[key]);
                 }
             })
             .catch((error) => {
                 console.error('Error:', error);
             });
-        })
-        
-
-        function fetchSubkategori() {
-            const kategoriId = kategoriSelect.value;
-            const subkategoriId = subkategoriSelect.value;
-            
-            // Clear existing content
-            queryResult.innerHTML = '';
-            
-        }
-
-        function getKategoriName(kategoriId) {
-            const option = kategoriSelect.querySelector(`option[value="${kategoriId}"]`);
-            return option ? option.textContent : '';
-        }
+        });
 
         function renderKategoriCard(kategoriId, subkategories) {
             const urlPattern = queryResult.dataset.urlPattern;
-            const kategoriName = subkategories[0]['namakategori']
+            const kategoriName = subkategories[0]['namakategori'];
             const cardHTML = `
                 <div class="bg-white rounded-lg shadow-md mb-6 p-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">${kategoriName}</h2>
@@ -138,42 +114,28 @@
         }
     </script>
 {% else %}
-<div class="min-h-screen bg-gradient-to-br from-[#3163ea] to-[#eff6ff] flex items-center justify-center px-4 py-12">
-    <div class="max-w-4xl w-full bg-white/30 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden">
-        <div class="p-12 text-center">
-            <!-- Title dengan Gradient dan Font yang Sudah Ada -->
-            <h1 class="text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#3163ea] to-blue-600 mb-4 leading-relaxed py-2">
-                Sijarta
-            </h1>
-            <p class="text-2xl text-gray-800 mb-8 font-medium">
-                Pekerjaan rumah, jadi mudah!
-            </p>
-            
-            <div class="flex justify-center space-x-4">
-                <a href="/login" class="px-8 py-3 bg-[#3163ea] text-white rounded-full hover:bg-blue-700 transition-colors duration-300 shadow-md">
-                    Login
-                </a>
-                <a href="/register" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300">
-                    Register
-                </a>
-            </div>
+    <!-- Jika Belum Login -->
+    <div class="min-h-screen bg-gradient-to-br from-[#3163ea] to-[#eff6ff] flex items-center justify-center px-4 py-12">
+        <div class="max-w-4xl w-full bg-white/30 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden">
+            <div class="p-12 text-center">
+                <h1 class="text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#3163ea] to-blue-600 mb-4 leading-relaxed py-2">
+                    Sijarta
+                </h1>
+                <p class="text-2xl text-gray-800 mb-8 font-medium">
+                    Pekerjaan rumah, jadi mudah!
+                </p>
 
-            <div class="mt-12 grid md:grid-cols-3 gap-6">
-                <div class="bg-white/50 p-6 rounded-xl hover:bg-white/70 transition-all duration-300">
-                    <h3 class="text-xl font-bold text-[#3163ea] mb-3">Mudah</h3>
-                    <p class="text-gray-700">Temukan jasa dengan cepat</p>
-                </div>
-                <div class="bg-white/50 p-6 rounded-xl hover:bg-white/70 transition-all duration-300">
-                    <h3 class="text-xl font-bold text-[#3163ea] mb-3">Terpercaya</h3>
-                    <p class="text-gray-700">Penyedia jasa berkualitas</p>
-                </div>
-                <div class="bg-white/50 p-6 rounded-xl hover:bg-white/70 transition-all duration-300">
-                    <h3 class="text-xl font-bold text-[#3163ea] mb-3">Nyaman</h3>
-                    <p class="text-gray-700">Proses booking aman</p>
+                <div class="flex justify-center space-x-4">
+                    <a href="/login" class="px-8 py-3 bg-[#3163ea] text-white rounded-full hover:bg-blue-700 transition-colors duration-300 shadow-md">
+                        Login
+                    </a>
+                    <a href="/register" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300">
+                        Register
+                    </a>
                 </div>
             </div>
         </div>
     </div>
-</div>
 {% endif %}
+
 {% endblock content %}

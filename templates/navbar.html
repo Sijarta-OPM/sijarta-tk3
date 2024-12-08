@@ -9,26 +9,39 @@
             </a>
         </div>
 
-        <div class="hidden md:flex items-center py-3 ml-24 space-x-1">
+        <div class="hidden md:flex items-center py-3 ml-24 space-x-4">
             {% if logged_in %}
-                <a href="{% url 'home' %}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 rounded-lg text-lg text-gray-500 hover:text-gray-900 transition duration-300">Home</a>
-                <a href="{% url 'mypay:show_mypay' %}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 text-gray-500 rounded-lg text-lg hover:text-gray-900 transition duration-300">MyPay</a>
+                <a href="{% url 'home' %}" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300" onclick="setActiveButton(this)">
+                    Home
+                </a>
+                <a href="{% url 'mypay:show_mypay' %}" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300" onclick="setActiveButton(this)">
+                    MyPay
+                </a>
 
                 {% if is_pelanggan %}
-                    <a href="{% url 'kelola_status_pesanan' user.0 %}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 text-lg text-gray-500 rounded-lg hover:text-gray-900 transition duration-300">Kelola Pesanan Saya</a>
-                    <a href="{% url 'diskon' %}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 text-lg text-gray-500 rounded-lg hover:text-gray-900 transition duration-300">Diskon</a>
+                    <a href="{% url 'kelola_status_pesanan' user.0 %}" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300" onclick="setActiveButton(this)">
+                        Kelola Pesanan Saya
+                    </a>
+                    <a href="{% url 'diskon' %}" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300" onclick="setActiveButton(this)">
+                        Diskon
+                    </a>
                 {% else %}
-                    <a href="{% url 'pekerjaan_jasa' %}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 text-lg text-gray-500 rounded-lg hover:text-gray-900 transition duration-300">Kelola Pekerjaan Saya</a>
-                    <a href="{% url 'status_pekerjaan_jasa' %}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 text-lg text-gray-500 rounded-lg hover:text-gray-900 transition duration-300">Kelola Status Pekerjaan</a>
+                    <a href="{% url 'pekerjaan_jasa' %}" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300" onclick="setActiveButton(this)">
+                        Kelola Pekerjaan Saya
+                    </a>
+                    <a href="{% url 'status_pekerjaan_jasa' %}" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300" onclick="setActiveButton(this)">
+                        Kelola Status Pekerjaan
+                    </a>
                 {% endif %}
-                <a href="{% url 'profile' user.0 %}" class="py-2 px-3 bg-gray-100 hover:bg-gray-300 rounded-lg text-lg text-gray-500 hover:text-gray-900 transition duration-300">Profil</a>
+                <a href="{% url 'profile' user.0 %}" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300" onclick="setActiveButton(this)">
+                    Profil
+                </a>
             {% else %}
                 <div class="flex items-center space-x-3">
-                    <!-- Tombol Login dan Register yang lebih stylish -->
-                    <a href="{% url 'login' %}" class="px-8 py-3 bg-[#3163ea] hover:bg-blue-700 font-medium text-xl text-white rounded-full hover:text-gray-900 transition duration-300 shadow-md">
+                    <a href="{% url 'login' %}" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300">
                         Login
                     </a>
-                    <a href="{% url 'register' %}" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition duration-300">
+                    <a href="{% url 'register' %}" class="px-8 py-3 border-2 border-[#3163ea] text-[#3163ea] rounded-full hover:bg-[#3163ea] hover:text-white transition-colors duration-300">
                         Register
                     </a>
                 </div>
@@ -45,8 +58,8 @@
                 (Pekerja)
                 {% endif %}
             </p>
-            
-            <a href="{% url 'logout' %}" class="py-2 px-4 font-medium text-white bg-red-500 rounded hover:bg-red-600 transition duration-300">
+            <!-- Tombol Logout di sini -->
+            <a href="{% url 'logout' %}" class="px-8 py-3 border-2 border-red-500 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors duration-300" onclick="setActiveButton(this)">
                 Logout
             </a>
         </div>
@@ -120,4 +133,14 @@
     btn.addEventListener("click", () => {
         menu.classList.toggle("hidden");
     });
+
+    // Function to highlight the last clicked button
+    function setActiveButton(button) {
+        // Remove active class from all buttons
+        const buttons = document.querySelectorAll(".md\\:flex a");
+        buttons.forEach(btn => btn.classList.remove("bg-blue-500", "text-white"));
+
+        // Add active class to the clicked button
+        button.classList.add("bg-blue-500", "text-white");
+    }
 </script>
