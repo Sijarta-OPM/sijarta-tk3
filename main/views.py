@@ -439,7 +439,7 @@ def view_pemesanan_jasa(request):
                         }
                     print("successfully access")
 
-                    # load pekerjaan yang sudah dibayar oleh user, tetapi belom dikarjakan pekerja lain
+                    # load pekerjaan yang sudah dibayar oleh user, tetapi belom dikerjakan pekerja lain
                     cursor.execute(
                         '''
                         select
@@ -474,7 +474,7 @@ def view_pemesanan_jasa(request):
                     pekerjaan_tersedia = cursor.fetchall()
                     context['pekerjaan_tersedia'] = pekerjaan_tersedia
                     print(pekerjaan_tersedia)
-                    # extract kategori pekerjaan
+                    # Extract kategori pekerjaan
                     kategori_jasa = []
                     for pekerjaan in pekerjaan_tersedia:
                         if [pekerjaan[1], pekerjaan[2]] not in kategori_jasa:
@@ -484,7 +484,7 @@ def view_pemesanan_jasa(request):
                     return render(request, 'pekerjaan_jasa.html', context)
                                     
                 
-    print("no session was found, please log in!")
+    print("No session was found, please log in!")
     return redirect('login')
 
 def view_status_pemesanan_jasa(request):

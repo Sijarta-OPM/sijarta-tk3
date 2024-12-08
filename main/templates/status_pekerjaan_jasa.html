@@ -129,7 +129,7 @@
         const updateStatusButton = document.querySelectorAll('button.update-status-button')
         updateStatusButton.forEach(button =>{
             button.addEventListener('click', function(){
-                // when click the button, we will sent request to server to update current
+                // when clicking the button, we will send request to server to update current
                 const url = "{%url 'update_status_pemesanan'%}"
                 const idpemesanan = button.getAttribute('data-idtrpemesanan');
                 fetch(url, {
