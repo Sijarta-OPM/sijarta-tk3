@@ -22,5 +22,6 @@ urlpatterns=[
     path('api/kerjakan-pemesanan-jasa/', kerjakan_pemesesanan_jasa),
     path('api/update-status-pemesanan/', update_status_pemesanan, name="update_status_pemesanan"),
     path('api/get-filtered-pesanan/', get_filtered_pesanan, name='get_filtered_pesanan'),
+    path('edit_profile/<uuid:user_id>/', edit_profile, name='edit_profile'),
 
 ]

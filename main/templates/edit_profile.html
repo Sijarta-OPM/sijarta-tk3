@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mx-auto p-4 max-w-2xl">
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h1 class="text-2xl font-bold mb-6">Edit Profile</h1>
+        
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- all user fields -->
+            <div class="space-y-2">
+                <label for="nama" class="block text-sm font-medium text-gray-700">Nama:</label>
+                <input type="text" id="nama" name="nama" value="{{ user.1 }}" required 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="space-y-2">
+                <label for="jeniskelamin" class="block text-sm font-medium text-gray-700">Jenis Kelamin:</label>
+                <select name="jeniskelamin" id="jeniskelamin" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="L" {% if user.2 == 'L' %}selected{% endif %}>Laki-laki</option>
+                    <option value="P" {% if user.2 == 'P' %}selected{% endif %}>Perempuan</option>
+                </select>
+            </div>
+
+            <div class="space-y-2">
+                <label for="nohp" class="block text-sm font-medium text-gray-700">No HP:</label>
+                <input type="text" id="nohp" name="nohp" value="{{ user.3 }}" required 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="space-y-2">
+                <label for="tgllahir" class="block text-sm font-medium text-gray-700">Tanggal Lahir:</label>
+                <input type="date" id="tgllahir" name="tgllahir" value="{{ user.5|date:'Y-m-d' }}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="space-y-2">
+                <label for="alamat" class="block text-sm font-medium text-gray-700">Alamat:</label>
+                <textarea id="alamat" name="alamat" rows="3" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">{{ user.6 }}</textarea>
+            </div>
+
+            {% if not is_pelanggan %}
+            <!-- pekerj -->
+            <div class="space-y-2">
+                <label for="namabank" class="block text-sm font-medium text-gray-700">Nama Bank:</label>
+                <select id="namabank" name="namabank" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {% for bank in bank_choices %}
+                        <option value="{{ bank }}" {% if role.1 == bank %}selected{% endif %}>
+                            {{ bank }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="space-y-2">
+                <label for="nomorrekening" class="block text-sm font-medium text-gray-700">Nomor Rekening:</label>
+                <input type="text" id="nomorrekening" name="nomorrekening" value="{{ role.2 }}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="space-y-2">
+                <label for="npwp" class="block text-sm font-medium text-gray-700">NPWP:</label>
+                <input type="text" id="npwp" name="npwp" value="{{ role.3 }}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="space-y-2">
+                <label for="linkfoto" class="block text-sm font-medium text-gray-700">URL Foto:</label>
+                <input type="url" id="linkfoto" name="linkfoto" value="{{ role.4 }}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            {% endif %}
+
+            <button type="submit" 
+                class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-300 ease-in-out">
+                Update Profile
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock content %}

@@ -1152,3 +1152,69 @@ def get_filtered_pesanan(request):
         'status': 'success',
         'data': result
     }, safe=False)
+
+
+def edit_profile(request, user_id):
+    # Verify user
+    user = get_user(request.session['sessionId'])
+    if not user or str(user[0]) != str(user_id):
+        return redirect('login')
+
+    # Pilihan bank
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT DISTINCT namabank 
+            FROM public.pekerja
+            WHERE namabank IS NOT NULL
+            ORDER BY namabank
+        """)
+        bank_choices = [row[0] for row in cursor.fetchall()]
+
+    if request.method == 'POST':
+        # Common fields
+        nama = request.POST.get('nama')
+        jeniskelamin = request.POST.get('jeniskelamin')
+        nohp = request.POST.get('nohp')
+        tgllahir = request.POST.get('tgllahir')
+        alamat = request.POST.get('alamat')
+
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute("BEGIN")
+                # Update base user fields
+                cursor.execute("""
+                    UPDATE public.user 
+                    SET nama = %s, jeniskelamin = %s, nohp = %s, tgllahir = %s, alamat = %s
+                    WHERE id = %s
+                """, [nama, jeniskelamin, nohp, tgllahir, alamat, user[0]])
+
+                # Worker fields
+                if not is_pelanggan(user[0]):
+                    namabank = request.POST.get('namabank')
+                    nomorrekening = request.POST.get('nomorrekening')
+                    npwp = request.POST.get('npwp')
+                    linkfoto = request.POST.get('linkfoto')
+                    
+                    cursor.execute("""
+                        UPDATE public.pekerja 
+                        SET namabank = %s, nomorrekening = %s, npwp = %s, linkfoto = %s
+                        WHERE id = %s
+                    """, [namabank, nomorrekening, npwp, linkfoto, user[0]])
+
+                cursor.execute("COMMIT")
+                messages.success(request, 'Profile updated successfully')
+                return redirect('profile', id=user[0])
+            
+            except DatabaseError:
+                cursor.execute("ROLLBACK")
+                messages.error(request, 'Failed to update profile')
+    
+    context = {
+        'logged_in': True,
+        'user': user,
+        'is_pelanggan': is_pelanggan(user[0]),
+        'role': get_pekerja(user[0]) if not is_pelanggan(user[0]) else get_pelanggan(user[0]),
+        'bank_choices': bank_choices
+    }
+    
+    return render(request, 'edit_profile.html', context)
