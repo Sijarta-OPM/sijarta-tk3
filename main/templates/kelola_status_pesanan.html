@@ -36,7 +36,7 @@
                 <p class="text-gray-700"><span class="font-semibold">Nama Pekerja:</span> {{ pesanan.4 }}</p>
                 <p class="text-gray-700"><span class="font-semibold">Status:</span> {{ pesanan.5 }}</p>
                 <div>
-                    {% if pesanan.5 == "Menunggu Pembayaran" or pesanan.5 == "Mencari Pekerja Terdekat" %}
+                    {% if pesanan.5 == "Menunggu Pembayaran"  or  pesanan.5 == "Mencari Pekerja Terdekat" %}
                     <form method="POST" action="{% url 'cancel_pesanan' pesanan.0 %}">
                         {% csrf_token %}
                         <button type="submit" class="inline-block bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 ease-in-out">Batalkan</button>
@@ -44,6 +44,7 @@
                     {% elif pesanan.5 == "Pesanan Selesai" or pesanan.5 == "Pekerjaan Selesai" %}
                     <a href="{% url 'create_testimoni' pesanan.0 %}" class="inline-block bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-300 ease-in-out">Buat Testimoni</a>
                     {% endif %}
+                    <p>hello</p>
                 </div>
             </div>
             {% endfor %}

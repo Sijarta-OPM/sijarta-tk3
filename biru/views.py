@@ -71,6 +71,7 @@ def beli_voucher(request):
     metode_bayar = data.get('payment_method')
 
     success = False
+    
     print(kode)
     with connection.cursor() as cursor:
         cursor.execute(

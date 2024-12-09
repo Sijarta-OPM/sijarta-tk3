@@ -266,61 +266,61 @@ def add_pemesanan_jasa(request):
                 insert into public.tr_pemesanan_status
                 values
                 (%s, %s, %s)
-                ''', [id, '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3', tglpemesanan]
+                ''', [id, 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9', tglpemesanan]
             )
-
-    if float(user[7] >= float(totalbiaya)): # 
-        orderstatus = True
-        connection.cursor().execute(
-            '''
-            insert into public.tr_pemesanan_jasa
-            (
-                id, tglpemesanan, totalbiaya,
-                idpelanggan, idkategorijasa, 
-                sesi, idmetodebayar
-            )
-            values
-            (
-                %s, %s, %s,
-                %s, %s,
-                %s, %s
-            )
-            '''
-            , [
-                id, tglpemesanan, totalbiaya,
-                idpelanggan, idkategorijasa,
-                sesi, idmetodebayar
-            ]
-        )
-        connection.cursor().execute(
-            '''
-            insert into public.tr_pemesanan_status
-            values
-            (%s, %s, %s)
-            ''', [id, '3fa85f64-5717-4562-b3fc-2c963f66afa6', tglpemesanan]
-        )
-        if (iddiskon):
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    '''
-                    update
-                        public.tr_pembelian_voucher
-                    set
-                        telahdigunakan = telahdigunakan + 1
-                    where
-                        idvoucher = %s and idpelanggan = %s
-                    ''', [iddiskon, user[0]]
-                )
+    else:
+        if float(user[7] >= float(totalbiaya)): # 
+            orderstatus = True
             connection.cursor().execute(
                 '''
-                update
-                    public.tr_pemesanan_jasa
-                set
-                    iddiskon = %s
-                where
-                    id = %s
-                ''', [iddiskon, id]
+                insert into public.tr_pemesanan_jasa
+                (
+                    id, tglpemesanan, totalbiaya,
+                    idpelanggan, idkategorijasa, 
+                    sesi, idmetodebayar
+                )
+                values
+                (
+                    %s, %s, %s,
+                    %s, %s,
+                    %s, %s
+                )
+                '''
+                , [
+                    id, tglpemesanan, totalbiaya,
+                    idpelanggan, idkategorijasa,
+                    sesi, idmetodebayar
+                ]
             )
+            connection.cursor().execute(
+                '''
+                insert into public.tr_pemesanan_status
+                values
+                (%s, %s, %s)
+                ''', [id, '3fa85f64-5717-4562-b3fc-2c963f66afa6', tglpemesanan]
+            )
+            if (iddiskon):
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        '''
+                        update
+                            public.tr_pembelian_voucher
+                        set
+                            telahdigunakan = telahdigunakan + 1
+                        where
+                            idvoucher = %s and idpelanggan = %s
+                        ''', [iddiskon, user[0]]
+                    )
+                connection.cursor().execute(
+                    '''
+                    update
+                        public.tr_pemesanan_jasa
+                    set
+                        iddiskon = %s
+                    where
+                        id = %s
+                    ''', [iddiskon, id]
+                )
 
     return JsonResponse({
         'status' : 'success',

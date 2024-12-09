@@ -467,7 +467,7 @@ def view_pemesanan_jasa(request):
                         on 
                             kkj.kategorijasaid = kj.id
                         where 
-                            ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
+                            ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9' or ps.idstatus = '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3'
                             and kkj.pekerjaid = %s
                         ''',[user[0]]
                     )
@@ -577,8 +577,7 @@ def get_pemesanan(request):
                     pkj.kategorijasaid = kj.id
                 where 
                     ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
-                    and pkj.pekerjaid = %s
-                ''', [user[0]]
+                '''
             )
             result = cursor.fetchall()
         else:
@@ -1009,8 +1008,15 @@ def kelola_status_pesanan(request, user_id):
     # Fetch orders for the user that are currently in progress
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT pj.id, skj.namasubkategori, sl.sesi, pj.totalbiaya, u.nama, sp.status
-            FROM public.tr_pemesanan_jasa pj
+            SELECT 
+                pj.id, 
+                skj.namasubkategori,
+                sl.sesi,
+                pj.totalbiaya,
+                u.nama,
+                sp.status
+            FROM 
+                public.tr_pemesanan_jasa pj
             JOIN (
                 SELECT DISTINCT ON (idtrpemesanan) idtrpemesanan, idstatus
                 FROM public.tr_pemesanan_status
@@ -1024,7 +1030,7 @@ def kelola_status_pesanan(request, user_id):
             WHERE pj.idpelanggan = %s AND sp.status IN ('Menunggu Pembayaran', 'Mencari Pekerja Terdekat')
         """, [user_id])
         pesanan_list = cursor.fetchall()
-
+    
     context = {
         'pesanan_list': pesanan_list,
         'subkategori_list': subkategori_list,
