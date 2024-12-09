@@ -1111,12 +1111,13 @@ def create_testimoni(request, id):
                 print(f"Error creating testimoni: {str(e)}")  # Debug log
                 messages.error(request, 'Gagal membuat testimoni')
                 return redirect('kelola_status_pesanan', user_id=user[0])
+            
 def get_filtered_pesanan(request):
     user = get_user(request.session['sessionId'])
     if not user:
         return redirect('login')
     
-    status = request.GET.get('status', '').strip()
+    status_id = request.GET.get('status', '').strip()
     subkategori = request.GET.get('subkategori', '').strip()
 
     with connection.cursor() as cursor:
@@ -1137,9 +1138,9 @@ def get_filtered_pesanan(request):
         '''
         params = [user[0]]
 
-        if status:
-            query += ' AND sp.status = %s'
-            params.append(status)
+        if status_id:
+            query += ' AND ps.idstatus = %s'
+            params.append(status_id)
 
         if subkategori:
             query += ' AND skj.id = %s'
@@ -1148,11 +1149,27 @@ def get_filtered_pesanan(request):
         cursor.execute(query, params)
         result = cursor.fetchall()
 
+        # pilihan
+        cursor.execute("""
+            SELECT id, status 
+            FROM public.status_pesanan 
+            ORDER BY CASE status
+                WHEN 'Menunggu Pembayaran' THEN 1
+                WHEN 'Pembayaran Dikonfirmasi' THEN 2
+                WHEN 'Mencari Pekerja Terdekat' THEN 3
+                WHEN 'Pekerja Sedang Menuju Lokasi' THEN 4
+                WHEN 'Pekerjaan Sedang Dilaksanakan' THEN 5
+                WHEN 'Pekerjaan Selesai' THEN 6
+                WHEN 'Ulasan Diberikan' THEN 7
+            END
+        """)
+        status_choices = cursor.fetchall()
+
     return JsonResponse({
         'status': 'success',
-        'data': result
+        'data': result,
+        'status_choices': status_choices
     }, safe=False)
-
 
 def edit_profile(request, user_id):
     # Verify user
