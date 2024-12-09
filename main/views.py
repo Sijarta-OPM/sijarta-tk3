@@ -997,49 +997,39 @@ def kelola_status_pesanan(request, user_id):
     if not user or str(user[0]) != str(user_id):
         return redirect('login')
 
-    # Fetch subcategories for the filter
     with connection.cursor() as cursor:
+        # Fetch status choices
+        cursor.execute("""
+            SELECT id, status 
+            FROM public.status_pesanan 
+            ORDER BY CASE status
+                WHEN 'Menunggu Pembayaran' THEN 1
+                WHEN 'Pembayaran Dikonfirmasi' THEN 2
+                WHEN 'Mencari Pekerja Terdekat' THEN 3
+                WHEN 'Pekerja Sedang Menuju Lokasi' THEN 4
+                WHEN 'Pekerjaan Sedang Dilaksanakan' THEN 5
+                WHEN 'Pekerjaan Selesai' THEN 6
+                WHEN 'Ulasan Diberikan' THEN 7
+            END
+        """)
+        status_choices = cursor.fetchall()
+
+        # Fetch subcategories
         cursor.execute("""
             SELECT id, namasubkategori
             FROM public.subkategori_jasa
         """)
         subkategori_list = cursor.fetchall()
 
-    # Fetch orders for the user that are currently in progress
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT 
-                pj.id, 
-                skj.namasubkategori,
-                sl.sesi,
-                pj.totalbiaya,
-                u.nama,
-                sp.status
-            FROM 
-                public.tr_pemesanan_jasa pj
-            JOIN (
-                SELECT DISTINCT ON (idtrpemesanan) idtrpemesanan, idstatus
-                FROM public.tr_pemesanan_status
-                ORDER BY idtrpemesanan, tglwaktu DESC
-            ) ps ON pj.id = ps.idtrpemesanan
-            JOIN public.status_pesanan sp ON ps.idstatus = sp.id
-            JOIN public.subkategori_jasa skj ON pj.idkategorijasa = skj.id
-            JOIN public.sesi_layanan sl ON skj.id = sl.subkategoriid
-            LEFT JOIN public.pekerja p ON pj.idpekerja = p.id
-            LEFT JOIN public.user u ON p.id = u.id
-            WHERE pj.idpelanggan = %s AND sp.status IN ('Menunggu Pembayaran', 'Mencari Pekerja Terdekat')
-        """, [user_id])
-        pesanan_list = cursor.fetchall()
-    
     context = {
-        'pesanan_list': pesanan_list,
-        'subkategori_list': subkategori_list,
         'logged_in': True,
         'user': user,
-        'is_pelanggan': is_pelanggan(user[0])
+        'is_pelanggan': is_pelanggan(user[0]),
+        'status_choices': status_choices,
+        'subkategori_list': subkategori_list
     }
-    return render(request, 'kelola_status_pesanan.html', context)
 
+    return render(request, 'kelola_status_pesanan.html', context)
 def cancel_pesanan(request, id):
     user = get_user(request.session['sessionId'])
     if not user:
