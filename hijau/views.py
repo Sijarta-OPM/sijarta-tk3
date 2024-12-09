@@ -192,16 +192,16 @@ def check_diskon(request):
                 if (tipe_diskon):
                     # dipake = int(tipe_diskon[3]) + 1
                     try:
-                        cursor.execute(
-                            '''
-                            update
-                                public.tr_pembelian_voucher
-                            set
-                                telahdigunakan = telahdigunakan + 1
-                            where
-                                idvoucher = %s and idpelanggan = %s
-                            ''', [kodediskon, user[0]]
-                        )
+                        # cursor.execute(
+                        #     '''
+                        #     update
+                        #         public.tr_pembelian_voucher
+                        #     set
+                        #         telahdigunakan = telahdigunakan + 1
+                        #     where
+                        #         idvoucher = %s and idpelanggan = %s
+                        #     ''', [kodediskon, user[0]]
+                        # )
                         potongan_harga = float(diskon[1]) /100 * nominal
                     except Exception as e:
                         print(e)
@@ -235,14 +235,6 @@ def add_pemesanan_jasa(request):
     iddiskon = data.get('iddiskon')
     idmetodebayar = data.get('idmetodebayar')
     orderstatus = False
-    print("id ",id)
-    print("tglpemesanan ", tglpemesanan)
-    print("totalbiaya ", totalbiaya)
-    print("idpelanggan ", idpelanggan)
-    print("idkategorijasa ", idkategorijasa)
-    print("sesi ", sesi)
-    print("iddiskon ",iddiskon)
-    print("idmetodebayar ",idmetodebayar)
 
     if float(user[7]) < float(totalbiaya):
         orderstatus = False
@@ -308,6 +300,17 @@ def add_pemesanan_jasa(request):
             ''', [id, '3fa85f64-5717-4562-b3fc-2c963f66afa6', tglpemesanan]
         )
         if (iddiskon):
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    '''
+                    update
+                        public.tr_pembelian_voucher
+                    set
+                        telahdigunakan = telahdigunakan + 1
+                    where
+                        idvoucher = %s and idpelanggan = %s
+                    ''', [iddiskon, user[0]]
+                )
             connection.cursor().execute(
                 '''
                 update
@@ -318,6 +321,7 @@ def add_pemesanan_jasa(request):
                     id = %s
                 ''', [iddiskon, id]
             )
+
     return JsonResponse({
         'status' : 'success',
         'orderstatus' : orderstatus
