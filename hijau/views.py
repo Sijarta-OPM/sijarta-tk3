@@ -7,11 +7,13 @@ import json
 # Create your views here.
 
 def view_subkategori_jasa(request, id):
+    # Initialize context with default values
     context = {
         'logged_in' : True,
         'is_pelanggan': True,
     }
     
+    # Fetch user information based on session ID
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -30,6 +32,7 @@ def view_subkategori_jasa(request, id):
 
         context['user'] = user
 
+        # Check if the user is a pelanggan or pekerja
         cursor.execute(
         """
             select * from public.pelanggan
@@ -50,6 +53,7 @@ def view_subkategori_jasa(request, id):
             context['role'] = pekerja
             context['is_pelanggan'] = False
 
+    # Fetch subkategori_jasa details
     with connection.cursor() as cursor:   
         cursor.execute(
             '''
@@ -60,6 +64,7 @@ def view_subkategori_jasa(request, id):
         subkategori_jasa = cursor.fetchone()
         context['subkategori_jasa'] = subkategori_jasa
 
+    # Fetch kategori_jasa details
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -70,6 +75,7 @@ def view_subkategori_jasa(request, id):
         kategori_jasa = cursor.fetchone()
         context['kategori_jasa'] = kategori_jasa
     
+    # Fetch sesi_layanan details
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -78,6 +84,8 @@ def view_subkategori_jasa(request, id):
             ''', [id]
         )
         context['sesi_layanan'] = cursor.fetchall()
+    
+    # Fetch pekerja details
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -93,6 +101,7 @@ def view_subkategori_jasa(request, id):
 
         context['pekerja'] = cursor.fetchall()
     
+    # Fetch testimoni details
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -138,14 +147,19 @@ def view_subkategori_jasa(request, id):
         testimoni = cursor.fetchall()
         
         context['testimoni'] = testimoni
+    
+    # Render the subkategori.html template with the context
     return render(request, 'subkategori.html', context)
 
 def check_diskon(request):
+    # Load request data
     data = json.loads(request.body)
     potongan_harga = 0
     nominal = float(data.get('nominal').strip())
     kodediskon = data.get('kodediskon')
     user = get_user(request.session['sessionId'])
+    
+    # Check if the discount code is valid and applicable
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -208,22 +222,25 @@ def check_diskon(request):
                         potongan_harga = 0
             else:
                 potongan_harga = float(diskon[1])/100 * nominal       
-        
+    
+    # Return the discount amount as JSON response
     return JsonResponse({
         'status' : 'success',
         'potongan_harga' : potongan_harga
     })
 
 def add_pemesanan_jasa(request):
-   
+    # Get user information
     user = get_user(request.session['sessionId'])
     if not user:
         return redirect('home')
-    # maybe make sure they are pelanggan, but it can be done later
+    
+    # Ensure the user is a pelanggan
     pelanggan = get_pelanggan(user[0])
     if not pelanggan:
         return redirect('home')
     
+    # Load request data
     data = json.loads(request.body)
 
     id = uuid.uuid4()
@@ -235,7 +252,6 @@ def add_pemesanan_jasa(request):
     iddiskon = data.get('iddiskon')
     idmetodebayar = data.get('idmetodebayar')
     orderstatus = False
-
     if float(user[7]) < float(totalbiaya):
         orderstatus = False
 
@@ -328,11 +344,13 @@ def add_pemesanan_jasa(request):
     })
 
 def get_already_join(request):
+    # Get user information
     user = get_user(request.session['sessionId'])
     is_registered = False
     if (not user):
         return redirect('home')
 
+    # Check if the user is already registered as pekerja in any kategori_jasa
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -347,18 +365,22 @@ def get_already_join(request):
         if (cursor.fetchone()):
             is_registered = True
     
+    # Return the registration status as JSON response
     return JsonResponse({
         'status' : 'success',
         'is_registered' : is_registered
     })
 
 def gabungkan_pekerja(request):
+    # Get user information
     user = get_user(request.session['sessionId'])
     data = json.loads(request.body)
 
     kategori_jasa = data.get('kategorijasa')
     if (not user):
         return redirect('home')
+    
+    # Insert pekerja_kategori_jasa record
     with connection.cursor() as cursor:
         try:
             cursor.execute(
@@ -371,6 +393,8 @@ def gabungkan_pekerja(request):
             return JsonResponse({
                 'status' : 'failed'
             })
+    
+    # Return success status as JSON response
     return JsonResponse({
         'status' : 'success'
     })

@@ -5,9 +5,11 @@ from datetime import date
 from main.views import get_user
 import uuid
 
+# Function to handle top-up requests
 def topup(request):
     nominal = int(request.POST.get('nominal').strip())
     with connection.cursor() as cursor:
+        # Fetch user details based on session ID
         cursor.execute(
             '''
             select 
@@ -20,6 +22,7 @@ def topup(request):
             ''', [request.session['sessionId']]
         )
         user = cursor.fetchone()
+        # Update user's saldo
         cursor.execute(
             '''
             update 
@@ -30,6 +33,7 @@ def topup(request):
                 id = %s;
             ''', [str(user[7]+nominal), user[0]]
         )
+        # Insert transaction record
         cursor.execute(
             '''
             insert into public.tr_mypay(Id, UserId, Tgl, Nominal, KategoriId)
@@ -38,9 +42,11 @@ def topup(request):
         )
     return redirect('mypay:show_transaction_form')
 
+# Function to handle payment requests
 def payment(request):
     idpemesanan = request.POST.get('idpemesanan').strip()
     with connection.cursor() as cursor:
+        # Fetch order and user details
         cursor.execute(
             '''
             select 
@@ -58,6 +64,7 @@ def payment(request):
             ''', [idpemesanan]
         )
         pemesanan_jasa = cursor.fetchone()
+        # Check if user has sufficient saldo
         if float(pemesanan_jasa[2]) >= float(pemesanan_jasa[3]):
             cursor.execute(
                 '''
@@ -93,11 +100,12 @@ def payment(request):
             
     return redirect('mypay:show_transaction_form')
         
+# Function to get orders for the logged-in user
 def get_order(request):
     user = get_user(request.session['sessionId'])
 
     with connection.cursor() as cursor:
-        
+        # Fetch orders for the user
         cursor.execute(
             '''
             select 
@@ -142,6 +150,7 @@ def get_order(request):
             }, safe=False
         )
 
+# Function to handle transfer requests
 def transfer(request):
     if (request.method == 'POST'):
         userid = request.POST.get('userid','').strip()
@@ -149,6 +158,7 @@ def transfer(request):
         nominal = int(request.POST.get('nominal'))
 
         with connection.cursor() as cursor:
+            # Fetch sender details
             cursor.execute(
                 '''
                 select * from public.user asal
@@ -159,6 +169,7 @@ def transfer(request):
             if pengirim[7] < nominal:
                 return redirect('mypay:show_transaction_form')
             
+            # Fetch receiver details
             cursor.execute(
                 '''
                 select 
@@ -175,7 +186,7 @@ def transfer(request):
             if (not penerima):
                 return redirect('mypay:show_transaction_form')
             
-
+            # Insert transaction records for both sender and receiver
             cursor.execute(
                     '''
                     insert into public.tr_mypay(Id, UserId, Tgl, Nominal, KategoriId)
@@ -188,6 +199,7 @@ def transfer(request):
                     values (%s, %s, %s, %s, %s)    
                     ''',[str(uuid.uuid4()), str(pengirim[0]), str(date.today()), str(-1*nominal), '8c7f9ffd-b369-470f-a59e-8bba08086923']
                 )
+            # Update saldo for both sender and receiver
             cursor.execute(
                 '''
                 update 
@@ -209,7 +221,7 @@ def transfer(request):
                     id = %s
                 ''', [str(pengirim[7]-nominal), pengirim[0]]
             )
-    # make sure it is successfully updated
+    # Ensure the updates are successful
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -223,10 +235,12 @@ def transfer(request):
         )
     return redirect('mypay:show_transaction_form')
     
+# Function to handle withdrawal requests
 def withdraw(request):
     norek = request.POST.get('norek')
     nominal = request.POST.get('nominal')
     with connection.cursor() as cursor:
+        # Fetch user details based on session ID and account number
         cursor.execute(
             '''
             select 
@@ -245,6 +259,7 @@ def withdraw(request):
         )
         user = cursor.fetchone()
         if (user):
+            # Update user's saldo and insert transaction record
             cursor.execute(
                 '''
                 update
@@ -257,7 +272,7 @@ def withdraw(request):
                 insert into public.tr_mypay(Id, UserId, Tgl, Nominal, KategoriId)
                 values (%s, %s, %s, %s, %s)
                 
-                ''',[
+                ''',[ 
                     user[7]-nominal,
                     user[0],
                     uuid.uuid4(),
@@ -270,9 +285,11 @@ def withdraw(request):
         
     return redirect('mypay:show_transaction_form')
 
+# Function to render the transaction form
 def view_transaction_form(request):
     context = {}
     with connection.cursor() as cursor:
+        # Fetch user details based on session ID
         cursor.execute(
             '''
             select 
@@ -296,6 +313,7 @@ def view_transaction_form(request):
         context['user'] = user
         context['logged_in'] = True
 
+        # Check if user is a customer or worker
         cursor.execute(
         """
             select 
@@ -323,12 +341,13 @@ def view_transaction_form(request):
             context['role'] = pekerja
             context['is_pelanggan'] = False
         
-        
     return render(request, 'transaction.html', context)
 
+# Function to render the MyPay page
 def view_mypay(request):
     context = {}
     with connection.cursor() as cursor:
+        # Fetch user details based on session ID
         cursor.execute(
             '''
             select 
@@ -354,6 +373,7 @@ def view_mypay(request):
         context['user'] = user
         context['logged_in'] = True
 
+        # Check if user is a customer or worker
         cursor.execute(
         """
             select 
@@ -382,6 +402,7 @@ def view_mypay(request):
             pekerja = cursor.fetchone()
             context['role'] = pekerja
             context['is_pelanggan'] = False
+        # Fetch transaction history for the user
         cursor.execute(
             '''
             select 

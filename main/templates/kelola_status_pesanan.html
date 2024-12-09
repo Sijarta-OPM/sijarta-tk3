@@ -6,9 +6,13 @@
         <div class="flex space-x-4">
             <select name="status_pesanan" id="status_pesanan" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Semua Status</option>
-                {% for status in status_list %}
-                <option value="{{ status.1 }}">{{ status.1 }}</option>
-                {% endfor %}
+                <option value="3fa85f64-5717-4562-b3fc-2c963f66afa6">Menunggu Pembayaran</option>
+                <option value="a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9">Pembayaran Dikonfirmasi</option>
+                <option value="5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3">Mencari Pekerja Terdekat</option>
+                <option value="e0bebe06-5c2c-4f8a-92f4-b8fdd0a3d3c8">Pekerja Sedang Menuju Lokasi</option>
+                <option value="c86aed0f-4a2f-4e85-81bf-d4eecfa1c555">Pekerjaan Sedang Dilaksanakan</option>
+                <option value="d2d5bb1b-7c78-4e5e-b0ac-06e6da102a4a">Pekerjaan Selesai</option>
+                <option value="7f9e3b98-9a3c-4f7a-b7e6-7a5e5e3d6f7c">Ulasan Diberikan</option>
             </select>
 
             <select name="subkategori_jasa" id="subkategori_jasa" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -41,7 +45,7 @@
                         {% csrf_token %}
                         <button type="submit" class="inline-block bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 ease-in-out">Batalkan</button>
                     </form>
-                    {% elif pesanan.5 == "Pesanan Selesai" or pesanan.5 == "Pekerjaan Selesai" %}
+                    {% elif pesanan.5 == "Pekerjaan Selesai" and pesanan.5 != "Ulasan Diberikan" %}
                     <a href="{% url 'create_testimoni' pesanan.0 %}" class="inline-block bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-300 ease-in-out">Buat Testimoni</a>
                     {% endif %}
                     <p>hello</p>
@@ -111,7 +115,7 @@
                             <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                             <button type="submit" class="inline-block bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 ease-in-out">Batalkan</button>
                         </form>
-                        ` : element[5] === "Pesanan Selesai" || element[5] === "Pekerjaan Selesai" && element[5] !== "Ulasan Diberikan" ? `
+                        ` : element[5] === "Pekerjaan Selesai" && element[5] !== "Ulasan Diberikan" ? `
                         <a href="/create_testimoni/${element[0]}/" class="inline-block bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-300 ease-in-out">Buat Testimoni</a>
                         ` : ''}
                     </div>
