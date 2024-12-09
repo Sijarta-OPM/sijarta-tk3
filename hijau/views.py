@@ -190,19 +190,18 @@ def check_diskon(request):
                 )
                 tipe_diskon = cursor.fetchone()
                 if (tipe_diskon):
-                    dipake = int(tipe_diskon[3]) + 1
+                    # dipake = int(tipe_diskon[3]) + 1
                     try:
                         cursor.execute(
                             '''
                             update
                                 public.tr_pembelian_voucher
                             set
-                                telahdigunakan = %s
+                                telahdigunakan = telahdigunakan + 1
                             where
-                                idvoucher = %s
-                            ''', [dipake,kodediskon]
+                                idvoucher = %s and idpelanggan = %s
+                            ''', [kodediskon, user[0]]
                         )
-                        print(tipe_diskon)
                         potongan_harga = float(diskon[1]) /100 * nominal
                     except Exception as e:
                         print(e)
