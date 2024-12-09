@@ -7,11 +7,13 @@ import json
 # Create your views here.
 
 def view_subkategori_jasa(request, id):
+    # Initialize context with default values
     context = {
         'logged_in' : True,
         'is_pelanggan': True,
     }
     
+    # Fetch user information based on session ID
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -30,6 +32,7 @@ def view_subkategori_jasa(request, id):
 
         context['user'] = user
 
+        # Check if the user is a pelanggan or pekerja
         cursor.execute(
         """
             select * from public.pelanggan
@@ -50,6 +53,7 @@ def view_subkategori_jasa(request, id):
             context['role'] = pekerja
             context['is_pelanggan'] = False
 
+    # Fetch subkategori_jasa details
     with connection.cursor() as cursor:   
         cursor.execute(
             '''
@@ -60,6 +64,7 @@ def view_subkategori_jasa(request, id):
         subkategori_jasa = cursor.fetchone()
         context['subkategori_jasa'] = subkategori_jasa
 
+    # Fetch kategori_jasa details
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -70,6 +75,7 @@ def view_subkategori_jasa(request, id):
         kategori_jasa = cursor.fetchone()
         context['kategori_jasa'] = kategori_jasa
     
+    # Fetch sesi_layanan details
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -78,6 +84,8 @@ def view_subkategori_jasa(request, id):
             ''', [id]
         )
         context['sesi_layanan'] = cursor.fetchall()
+    
+    # Fetch pekerja details
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -93,6 +101,7 @@ def view_subkategori_jasa(request, id):
 
         context['pekerja'] = cursor.fetchall()
     
+    # Fetch testimoni details
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -138,14 +147,19 @@ def view_subkategori_jasa(request, id):
         testimoni = cursor.fetchall()
         
         context['testimoni'] = testimoni
+    
+    # Render the subkategori.html template with the context
     return render(request, 'subkategori.html', context)
 
 def check_diskon(request):
+    # Load request data
     data = json.loads(request.body)
     potongan_harga = 0
     nominal = float(data.get('nominal').strip())
     kodediskon = data.get('kodediskon')
     user = get_user(request.session['sessionId'])
+    
+    # Check if the discount code is valid and applicable
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -190,40 +204,43 @@ def check_diskon(request):
                 )
                 tipe_diskon = cursor.fetchone()
                 if (tipe_diskon):
-                    dipake = int(tipe_diskon[3]) + 1
+                    # dipake = int(tipe_diskon[3]) + 1
                     try:
-                        cursor.execute(
-                            '''
-                            update
-                                public.tr_pembelian_voucher
-                            set
-                                telahdigunakan = %s
-                            where
-                                idvoucher = %s
-                            ''', [dipake,kodediskon]
-                        )
-                        print(tipe_diskon)
+                        # cursor.execute(
+                        #     '''
+                        #     update
+                        #         public.tr_pembelian_voucher
+                        #     set
+                        #         telahdigunakan = telahdigunakan + 1
+                        #     where
+                        #         idvoucher = %s and idpelanggan = %s
+                        #     ''', [kodediskon, user[0]]
+                        # )
                         potongan_harga = float(diskon[1]) /100 * nominal
                     except Exception as e:
                         print(e)
                         potongan_harga = 0
             else:
                 potongan_harga = float(diskon[1])/100 * nominal       
-        
+    
+    # Return the discount amount as JSON response
     return JsonResponse({
         'status' : 'success',
         'potongan_harga' : potongan_harga
     })
+
 def add_pemesanan_jasa(request):
-   
+    # Get user information
     user = get_user(request.session['sessionId'])
     if not user:
         return redirect('home')
-    # maybe make sure they are pelanggan, but it can be done later
+    
+    # Ensure the user is a pelanggan
     pelanggan = get_pelanggan(user[0])
     if not pelanggan:
         return redirect('home')
     
+    # Load request data
     data = json.loads(request.body)
 
     id = uuid.uuid4()
@@ -235,6 +252,9 @@ def add_pemesanan_jasa(request):
     iddiskon = data.get('iddiskon')
     idmetodebayar = data.get('idmetodebayar')
     orderstatus = False
+<<<<<<< HEAD
+    
+    # Print debug information
     print("id ",id)
     print("tglpemesanan ", tglpemesanan)
     print("totalbiaya ", totalbiaya)
@@ -243,10 +263,47 @@ def add_pemesanan_jasa(request):
     print("sesi ", sesi)
     print("iddiskon ",iddiskon)
     print("idmetodebayar ",idmetodebayar)
+    
+    # Check if the user has sufficient balance
+=======
+
+>>>>>>> 1ffe290c2d7ad68fe7fbe892b80d6b782a7f7a2d
     if float(user[7]) < float(totalbiaya):
         orderstatus = False
-    else:
+
+    if idmetodebayar != 'f3bdee97-1a7b-4d8f-b8c0-2a7cba2677cb':
+        with connection.cursor() as cursor:
+            cursor.execute(
+                '''
+                insert into public.tr_pemesanan_jasa
+                (
+                    id, tglpemesanan, totalbiaya,
+                    idpelanggan, idkategorijasa, 
+                    sesi, idmetodebayar
+                )
+                values
+                (
+                    %s, %s, %s,
+                    %s, %s,
+                    %s, %s
+                )
+                ''', [
+                    id, tglpemesanan, totalbiaya,
+                    idpelanggan, idkategorijasa,
+                    sesi, idmetodebayar
+                ]
+            )
+            cursor.execute(
+                '''
+                insert into public.tr_pemesanan_status
+                values
+                (%s, %s, %s)
+                ''', [id, '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3', tglpemesanan]
+            )
+
+    if float(user[7] >= float(totalbiaya)): # 
         orderstatus = True
+        # Insert pemesanan_jasa record
         connection.cursor().execute(
             '''
             insert into public.tr_pemesanan_jasa
@@ -268,6 +325,7 @@ def add_pemesanan_jasa(request):
                 sesi, idmetodebayar
             ]
         )
+        # Insert pemesanan_status record
         connection.cursor().execute(
             '''
             insert into public.tr_pemesanan_status
@@ -275,7 +333,19 @@ def add_pemesanan_jasa(request):
             (%s, %s, %s)
             ''', [id, '3fa85f64-5717-4562-b3fc-2c963f66afa6', tglpemesanan]
         )
+        # Update pemesanan_jasa with discount if applicable
         if (iddiskon):
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    '''
+                    update
+                        public.tr_pembelian_voucher
+                    set
+                        telahdigunakan = telahdigunakan + 1
+                    where
+                        idvoucher = %s and idpelanggan = %s
+                    ''', [iddiskon, user[0]]
+                )
             connection.cursor().execute(
                 '''
                 update
@@ -286,17 +356,25 @@ def add_pemesanan_jasa(request):
                     id = %s
                 ''', [iddiskon, id]
             )
+<<<<<<< HEAD
+    
+    # Return the order status as JSON response
+=======
+
+>>>>>>> 1ffe290c2d7ad68fe7fbe892b80d6b782a7f7a2d
     return JsonResponse({
         'status' : 'success',
         'orderstatus' : orderstatus
     })
 
 def get_already_join(request):
+    # Get user information
     user = get_user(request.session['sessionId'])
     is_registered = False
     if (not user):
         return redirect('home')
 
+    # Check if the user is already registered as pekerja in any kategori_jasa
     with connection.cursor() as cursor:
         cursor.execute(
             '''
@@ -311,18 +389,22 @@ def get_already_join(request):
         if (cursor.fetchone()):
             is_registered = True
     
+    # Return the registration status as JSON response
     return JsonResponse({
         'status' : 'success',
         'is_registered' : is_registered
     })
 
 def gabungkan_pekerja(request):
+    # Get user information
     user = get_user(request.session['sessionId'])
     data = json.loads(request.body)
 
     kategori_jasa = data.get('kategorijasa')
     if (not user):
         return redirect('home')
+    
+    # Insert pekerja_kategori_jasa record
     with connection.cursor() as cursor:
         try:
             cursor.execute(
@@ -335,6 +417,8 @@ def gabungkan_pekerja(request):
             return JsonResponse({
                 'status' : 'failed'
             })
+    
+    # Return success status as JSON response
     return JsonResponse({
         'status' : 'success'
     })
