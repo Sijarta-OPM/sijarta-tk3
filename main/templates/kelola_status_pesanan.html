@@ -1,33 +1,67 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mx-auto p-4 max-w-2xl">
-    <div class="bg-white shadow-md rounded-lg p-6 space-y-4">
-        <h1 class="text-2xl font-bold mb-4">Kelola Status Pesanan</h1>
-        <div class="flex space-x-4">
-            <select name="status_pesanan" id="status_pesanan" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Semua Status</option>
-                {% for status in status_choices %}
-                <option value="{{ status.0 }}">{{ status.1 }}</option>
-                {% endfor %}
-            </select>
+<div class="min-h-screen bg-gradient-to-br from-[#3163ea] to-[#eff6ff] p-8">
+    <div class="max-w-5xl mx-auto">
+        <div class="bg-white/30 backdrop-blur-md p-8 rounded-2xl shadow-2xl">
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Kelola Status Pesanan</h1>
+            <div class="space-y-6">
+                <!-- Filter Pesanan -->
+                <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
+                    <select name="status_pesanan" id="status_pesanan" class="w-full px-4 py-3 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Status</option>
+                        <option value="3fa85f64-5717-4562-b3fc-2c963f66afa6">Menunggu Pembayaran</option>
+                        <option value="a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9">Pembayaran Dikonfirmasi</option>
+                        <option value="5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3">Mencari Pekerja Terdekat</option>
+                        <option value="e0bebe06-5c2c-4f8a-92f4-b8fdd0a3d3c8">Pekerja Sedang Menuju Lokasi</option>
+                        <option value="c86aed0f-4a2f-4e85-81bf-d4eecfa1c555">Pekerjaan Sedang Dilaksanakan</option>
+                        <option value="d2d5bb1b-7c78-4e5e-b0ac-06e6da102a4a">Pekerjaan Selesai</option>
+                        <option value="7f9e3b98-9a3c-4f7a-b7e6-7a5e5e3d6f7c">Ulasan Diberikan</option>
+                    </select>
 
-            <select name="subkategori_jasa" id="subkategori_jasa" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Semua Subkategori Jasa</option>
-                {% for subkategori in subkategori_list %}
-                <option value="{{ subkategori.0 }}">{{ subkategori.1 }}</option>
-                {% endfor %}
-            </select>
+                    <select name="subkategori_jasa" id="subkategori_jasa" class="w-full px-4 py-3 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Subkategori Jasa</option>
+                        {% for subkategori in subkategori_list %}
+                        <option value="{{ subkategori.0 }}">{{ subkategori.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button id="filter_pesanan" class="w-full px-4 py-3 bg-[#3163ea] text-white font-medium rounded-md hover:bg-blue-700 transition-colors duration-300 shadow-md">
+                    Cari
+                </button>
+
+                <!-- Loading Indicator -->
+                <div id="loading" class="hidden text-center py-4">
+                    <p class="text-gray-500">Memuat data...</p>
+                </div>
+
+                <!-- Query Result -->
+                <div id="queryResult" class="space-y-6">
+                    {% for pesanan in pesanan_list %}
+                    <div class="bg-white/90 border rounded-lg p-6 shadow-md">
+                        <p class="text-gray-700"><span class="font-semibold">Subkategori Jasa:</span> {{ pesanan.1 }}</p>
+                        <p class="text-gray-700"><span class="font-semibold">Sesi Layanan:</span> {{ pesanan.2 }}</p>
+                        <p class="text-gray-700"><span class="font-semibold">Harga:</span> {{ pesanan.3 }}</p>
+                        <p class="text-gray-700"><span class="font-semibold">Nama Pekerja:</span> {{ pesanan.4 }}</p>
+                        <p class="text-gray-700"><span class="font-semibold">Status:</span> {{ pesanan.5 }}</p>
+                        <div class="mt-4">
+                            {% if pesanan.5 == "Menunggu Pembayaran" or pesanan.5 == "Mencari Pekerja Terdekat" %}
+                            <form method="POST" action="{% url 'cancel_pesanan' pesanan.0 %}">
+                                {% csrf_token %}
+                                <button type="submit" class="inline-block bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-300">
+                                    Batalkan
+                                </button>
+                            </form>
+                            {% elif pesanan.5 == "Pesanan Selesai" or pesanan.5 == "Pekerjaan Selesai" %}
+                            <a href="{% url 'create_testimoni' pesanan.0 %}" class="inline-block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300">
+                                Buat Testimoni
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
-
-        <button type="button" id="filter_pesanan" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300 ease-in-out">
-            Cari
-        </button>
-
-        <div id="loading" class="hidden text-center py-4">
-            <p>Memuat data...</p>
-        </div>
-
-        <div id="queryResult" class="space-y-4 mt-4"></div>
     </div>
 </div>
 
@@ -39,17 +73,17 @@
     const loadingIndicator = document.getElementById('loading');
 
     searchButton.addEventListener('click', search_pesanan);
-    
-    function search_pesanan(){
+    selectStatus.addEventListener('change', search_pesanan);
+    selectSubkategori.addEventListener('change', search_pesanan);
+
+    function search_pesanan() {
         const status = selectStatus.value;
         const subkategori = selectSubkategori.value;
         const parameters = new URLSearchParams();
-    
         if (status) parameters.append('status', status);
         if (subkategori) parameters.append('subkategori', subkategori);
     
         const url = `/api/get-filtered-pesanan/?${parameters.toString()}`;
-        
         loadingIndicator.classList.remove('hidden');
         queryResult.innerHTML = '';
     
@@ -58,44 +92,49 @@
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-            }
+            },
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.data.length === 0) {
-                queryResult.innerHTML = '<p class="text-center text-gray-500">Tidak ada pesanan yang ditemukan</p>';
-                return;
-            }
-    
-            data.data.forEach(element => {
-                queryResult.innerHTML += `
-                <div class="bg-gray-100 p-4 rounded-md shadow-sm space-y-2">
-                    <p class="text-gray-700"><span class="font-semibold">Subkategori Jasa:</span> ${element[1] || '-'}</p>
-                    <p class="text-gray-700"><span class="font-semibold">Sesi Layanan:</span> ${element[2] || '-'}</p>
-                    <p class="text-gray-700"><span class="font-semibold">Harga:</span> ${element[3] || '-'}</p>
-                    <p class="text-gray-700"><span class="font-semibold">Nama Pekerja:</span> ${element[4] || '-'}</p>
-                    <p class="text-gray-700"><span class="font-semibold">Status:</span> ${element[5] || '-'}</p>
-                    <div>
-                        ${element[5] === "Menunggu Pembayaran" || element[5] === "Mencari Pekerja Terdekat" ? `
-                        <form method="POST" action="/cancel_pesanan/${element[0]}/">
-                            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                            <button type="submit" class="inline-block bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 ease-in-out">Batalkan</button>
-                        </form>
-                        ` : element[5] === "Pekerjaan Selesai" && element[5] !== "Ulasan Diberikan" ? `
-                        <a href="/create_testimoni/${element[0]}/" class="inline-block bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-300 ease-in-out">Buat Testimoni</a>
-                        ` : ''}
-                    </div>
-                </div>
-                `;
+            .then((response) => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then((data) => {
+                if (data.data.length === 0) {
+                    queryResult.innerHTML = '<p class="text-center text-gray-500">Tidak ada pesanan yang ditemukan</p>';
+                    return;
+                }
+                data.data.forEach((element) => {
+                    queryResult.innerHTML += `
+                        <div class="bg-white/90 border rounded-lg p-6 shadow-md">
+                            <p class="text-gray-700"><span class="font-semibold">Subkategori Jasa:</span> ${element[1]}</p>
+                            <p class="text-gray-700"><span class="font-semibold">Sesi Layanan:</span> ${element[2]}</p>
+                            <p class="text-gray-700"><span class="font-semibold">Harga:</span> ${element[3]}</p>
+                            <p class="text-gray-700"><span class="font-semibold">Nama Pekerja:</span> ${element[4]}</p>
+                            <p class="text-gray-700"><span class="font-semibold">Status:</span> ${element[5]}</p>
+                            <div class="mt-4">
+                                ${element[5] === "Menunggu Pembayaran" || element[5] === "Mencari Pekerja Terdekat" ? `
+                                <form method="POST" action="/cancel_pesanan/${element[0]}/">
+                                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                                    <button type="submit" class="inline-block bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-300">
+                                        Batalkan
+                                    </button>
+                                </form>
+                                ` : element[5] === "Pesanan Selesai" || element[5] === "Pekerjaan Selesai" ? `
+                                <a href="/create_testimoni/${element[0]}/" class="inline-block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300">
+                                    Buat Testimoni
+                                </a>
+                                ` : ''}
+                            </div>
+                        </div>`;
+                });
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                queryResult.innerHTML = '<p class="text-center text-red-500">Terjadi kesalahan saat memuat data</p>';
+            })
+            .finally(() => {
+                loadingIndicator.classList.add('hidden');
             });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            queryResult.innerHTML = '<p class="text-center text-red-500">Terjadi kesalahan saat memuat data</p>';
-        })
-        .finally(() => {
-            loadingIndicator.classList.add('hidden');
-        });
     }
 </script>
 {% endblock content %}
