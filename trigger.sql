@@ -125,3 +125,47 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- tambahkan sql trigger kalian
+
+CREATE OR REPLACE FUNCTION public.kembalikan_saldo_pesanan_dibatalkan(id_pemesanan UUID)
+RETURNS VOID AS $$
+DECLARE
+    id_pelanggan UUID;
+    nominal_pesanan DECIMAL;
+BEGIN
+    SELECT IdPelanggan, TotalBiaya INTO id_pelanggan, nominal_pesanan
+    FROM public.TR_PEMESANAN_JASA
+    WHERE Id = id_pemesanan;
+
+    UPDATE public.USER
+    SET SaldoMyPay = SaldoMyPay + nominal_pesanan
+    WHERE Id = id_pelanggan;
+
+    INSERT INTO public.TR_MYPAY (
+        Id, UserId, Tgl, Nominal, KategoriId
+    ) VALUES (
+        gen_random_uuid(),
+        id_pelanggan,
+        CURRENT_DATE,
+        nominal_pesanan,
+        (SELECT Id FROM public.KATEGORI_TR_MYPAY WHERE Nama = 'Pengembalian Saldo')
+    );
+
+    RAISE NOTICE 'Saldo sebesar % telah dikembalikan ke pengguna dengan ID %.', nominal_pesanan, id_pelanggan;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION public.trigger_kembalikan_saldo()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.IdStatus = (SELECT Id FROM public.STATUS_PESANAN WHERE Status = 'Dibatalkan') THEN
+        PERFORM public.kembalikan_saldo_pesanan_dibatalkan(NEW.IdTrPemesanan);
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER kembalikan_saldo_pesanan_dibatalkan
+AFTER INSERT ON public.TR_PEMESANAN_STATUS
+FOR EACH ROW
+EXECUTE FUNCTION public.trigger_kembalikan_saldo();
