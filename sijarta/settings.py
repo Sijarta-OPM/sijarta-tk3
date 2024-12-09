@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-roq$(!qrp$xmw-&4d)noy+nu2sdu3^r%a)7227g&e^gph^4!49
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", 'https://sijarta-tk3-git-master-alvins-projects-5a089d3d.vercel.app/']
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", '.vercel.app']
 
 
 # Application definition
