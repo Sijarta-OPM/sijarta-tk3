@@ -44,17 +44,15 @@
         const status = selectStatus.value;
         const subkategori = selectSubkategori.value;
         const parameters = new URLSearchParams();
-
-        // add if they have values
+    
         if (status) parameters.append('status', status);
         if (subkategori) parameters.append('subkategori', subkategori);
-
+    
         const url = `/api/get-filtered-pesanan/?${parameters.toString()}`;
         
-        // loading supaya keren dikit
         loadingIndicator.classList.remove('hidden');
         queryResult.innerHTML = '';
-
+    
         fetch(url, {
             method: 'GET',
             headers: {
@@ -62,16 +60,13 @@
                 'X-Requested-With': 'XMLHttpRequest',
             }
         })
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.data.length === 0) {
                 queryResult.innerHTML = '<p class="text-center text-gray-500">Tidak ada pesanan yang ditemukan</p>';
                 return;
             }
-
+    
             data.data.forEach(element => {
                 queryResult.innerHTML += `
                 <div class="bg-gray-100 p-4 rounded-md shadow-sm space-y-2">
