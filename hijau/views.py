@@ -204,19 +204,18 @@ def check_diskon(request):
                 )
                 tipe_diskon = cursor.fetchone()
                 if (tipe_diskon):
-                    dipake = int(tipe_diskon[3]) + 1
+                    # dipake = int(tipe_diskon[3]) + 1
                     try:
-                        cursor.execute(
-                            '''
-                            update
-                                public.tr_pembelian_voucher
-                            set
-                                telahdigunakan = %s
-                            where
-                                idvoucher = %s
-                            ''', [dipake,kodediskon]
-                        )
-                        print(tipe_diskon)
+                        # cursor.execute(
+                        #     '''
+                        #     update
+                        #         public.tr_pembelian_voucher
+                        #     set
+                        #         telahdigunakan = telahdigunakan + 1
+                        #     where
+                        #         idvoucher = %s and idpelanggan = %s
+                        #     ''', [kodediskon, user[0]]
+                        # )
                         potongan_harga = float(diskon[1]) /100 * nominal
                     except Exception as e:
                         print(e)
@@ -253,6 +252,7 @@ def add_pemesanan_jasa(request):
     iddiskon = data.get('iddiskon')
     idmetodebayar = data.get('idmetodebayar')
     orderstatus = False
+<<<<<<< HEAD
     
     # Print debug information
     print("id ",id)
@@ -265,9 +265,43 @@ def add_pemesanan_jasa(request):
     print("idmetodebayar ",idmetodebayar)
     
     # Check if the user has sufficient balance
+=======
+
+>>>>>>> 1ffe290c2d7ad68fe7fbe892b80d6b782a7f7a2d
     if float(user[7]) < float(totalbiaya):
         orderstatus = False
-    else:
+
+    if idmetodebayar != 'f3bdee97-1a7b-4d8f-b8c0-2a7cba2677cb':
+        with connection.cursor() as cursor:
+            cursor.execute(
+                '''
+                insert into public.tr_pemesanan_jasa
+                (
+                    id, tglpemesanan, totalbiaya,
+                    idpelanggan, idkategorijasa, 
+                    sesi, idmetodebayar
+                )
+                values
+                (
+                    %s, %s, %s,
+                    %s, %s,
+                    %s, %s
+                )
+                ''', [
+                    id, tglpemesanan, totalbiaya,
+                    idpelanggan, idkategorijasa,
+                    sesi, idmetodebayar
+                ]
+            )
+            cursor.execute(
+                '''
+                insert into public.tr_pemesanan_status
+                values
+                (%s, %s, %s)
+                ''', [id, '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3', tglpemesanan]
+            )
+
+    if float(user[7] >= float(totalbiaya)): # 
         orderstatus = True
         # Insert pemesanan_jasa record
         connection.cursor().execute(
@@ -301,6 +335,17 @@ def add_pemesanan_jasa(request):
         )
         # Update pemesanan_jasa with discount if applicable
         if (iddiskon):
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    '''
+                    update
+                        public.tr_pembelian_voucher
+                    set
+                        telahdigunakan = telahdigunakan + 1
+                    where
+                        idvoucher = %s and idpelanggan = %s
+                    ''', [iddiskon, user[0]]
+                )
             connection.cursor().execute(
                 '''
                 update
@@ -311,8 +356,12 @@ def add_pemesanan_jasa(request):
                     id = %s
                 ''', [iddiskon, id]
             )
+<<<<<<< HEAD
     
     # Return the order status as JSON response
+=======
+
+>>>>>>> 1ffe290c2d7ad68fe7fbe892b80d6b782a7f7a2d
     return JsonResponse({
         'status' : 'success',
         'orderstatus' : orderstatus
