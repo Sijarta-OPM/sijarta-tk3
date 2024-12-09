@@ -1004,12 +1004,11 @@ def kelola_status_pesanan(request, user_id):
             FROM public.status_pesanan 
             ORDER BY CASE status
                 WHEN 'Menunggu Pembayaran' THEN 1
-                WHEN 'Pembayaran Dikonfirmasi' THEN 2
-                WHEN 'Mencari Pekerja Terdekat' THEN 3
-                WHEN 'Pekerja Sedang Menuju Lokasi' THEN 4
-                WHEN 'Pekerjaan Sedang Dilaksanakan' THEN 5
-                WHEN 'Pekerjaan Selesai' THEN 6
-                WHEN 'Ulasan Diberikan' THEN 7
+                WHEN 'Mencari Pekerja Terdekat' THEN 2
+                WHEN 'Pekerja Sedang Menuju Lokasi' THEN 3
+                WHEN 'Pekerjaan Sedang Dilaksanakan' THEN 4
+                WHEN 'Pekerjaan Selesai' THEN 5
+                WHEN 'Ulasan Diberikan' THEN 6
             END
         """)
         status_choices = cursor.fetchall()
@@ -1163,12 +1162,11 @@ def get_filtered_pesanan(request):
             FROM public.status_pesanan 
             ORDER BY CASE status
                 WHEN 'Menunggu Pembayaran' THEN 1
-                WHEN 'Pembayaran Dikonfirmasi' THEN 2
-                WHEN 'Mencari Pekerja Terdekat' THEN 3
-                WHEN 'Pekerja Sedang Menuju Lokasi' THEN 4
-                WHEN 'Pekerjaan Sedang Dilaksanakan' THEN 5
-                WHEN 'Pekerjaan Selesai' THEN 6
-                WHEN 'Ulasan Diberikan' THEN 7
+                WHEN 'Mencari Pekerja Terdekat' THEN 2
+                WHEN 'Pekerja Sedang Menuju Lokasi' THEN 3
+                WHEN 'Pekerjaan Sedang Dilaksanakan' THEN 4
+                WHEN 'Pekerjaan Selesai' THEN 5
+                WHEN 'Ulasan Diberikan' THEN 6
             END
         """)
         status_choices = cursor.fetchall()
