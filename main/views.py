@@ -1046,11 +1046,22 @@ def cancel_pesanan(request, id):
         return redirect('login')
 
     with connection.cursor() as cursor:
-        cursor.execute("""
-            DELETE FROM public.tr_pemesanan_jasa WHERE id = %s AND idpelanggan = %s
-        """, [id, user[0]])
+        try:
+            cursor.execute("BEGIN")
+            # Delete related records from tr_pemesanan_status
+            cursor.execute("""
+                DELETE FROM public.tr_pemesanan_status WHERE idtrpemesanan = %s
+            """, [id])
+            # Delete the order from tr_pemesanan_jasa
+            cursor.execute("""
+                DELETE FROM public.tr_pemesanan_jasa WHERE id = %s AND idpelanggan = %s
+            """, [id, user[0]])
+            cursor.execute("COMMIT")
+            messages.success(request, 'Pesanan berhasil dibatalkan')
+        except Exception as e:
+            cursor.execute("ROLLBACK")
+            messages.error(request, f'Gagal membatalkan pesanan: {str(e)}')
 
-    messages.success(request, 'Pesanan berhasil dibatalkan')
     return redirect('kelola_status_pesanan', user_id=user[0])
 
 def create_testimoni(request, id):
