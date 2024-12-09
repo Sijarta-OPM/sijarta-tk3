@@ -252,22 +252,6 @@ def add_pemesanan_jasa(request):
     iddiskon = data.get('iddiskon')
     idmetodebayar = data.get('idmetodebayar')
     orderstatus = False
-<<<<<<< HEAD
-    
-    # Print debug information
-    print("id ",id)
-    print("tglpemesanan ", tglpemesanan)
-    print("totalbiaya ", totalbiaya)
-    print("idpelanggan ", idpelanggan)
-    print("idkategorijasa ", idkategorijasa)
-    print("sesi ", sesi)
-    print("iddiskon ",iddiskon)
-    print("idmetodebayar ",idmetodebayar)
-    
-    # Check if the user has sufficient balance
-=======
-
->>>>>>> 1ffe290c2d7ad68fe7fbe892b80d6b782a7f7a2d
     if float(user[7]) < float(totalbiaya):
         orderstatus = False
 
@@ -356,12 +340,6 @@ def add_pemesanan_jasa(request):
                     id = %s
                 ''', [iddiskon, id]
             )
-<<<<<<< HEAD
-    
-    # Return the order status as JSON response
-=======
-
->>>>>>> 1ffe290c2d7ad68fe7fbe892b80d6b782a7f7a2d
     return JsonResponse({
         'status' : 'success',
         'orderstatus' : orderstatus
