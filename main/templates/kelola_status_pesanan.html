@@ -82,11 +82,11 @@
         const parameters = new URLSearchParams();
         if (status) parameters.append('status', status);
         if (subkategori) parameters.append('subkategori', subkategori);
-
+    
         const url = `/api/get-filtered-pesanan/?${parameters.toString()}`;
         loadingIndicator.classList.remove('hidden');
         queryResult.innerHTML = '';
-
+    
         fetch(url, {
             method: 'GET',
             headers: {

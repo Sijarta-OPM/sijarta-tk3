@@ -80,6 +80,8 @@
                     {% endfor %}
                 </select>
             </div>
+            <input type="hidden" id="kodeDiskon">
+            <input type="hidden" id="hargaDiskon">
             <button 
                 type="submit" 
                 class="w-full bg-[#3163ea] text-white py-2 rounded-md hover:bg-blue-700 transition"
@@ -115,6 +117,8 @@
             const kodevoucher = this.getAttribute('data-kode-voucher');
             const hargavoucher = this.getAttribute('data-harga-voucher');
             
+            document.getElementById('kodeDiskon').value = kodevoucher;
+            document.getElementById('hargaDiskon').value = hargavoucher;
             // Show modal
             document.getElementById('voucherModal').classList.remove('hidden');
         });
@@ -126,8 +130,53 @@
 
     document.getElementById('voucherPurchaseForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        alert('Voucher berhasil dibeli!');
-        document.getElementById('voucherModal').classList.add('hidden');
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        
+        if (!paymentMethod) {
+            alert('Silakan pilih metode pembayaran');
+            return;
+        }
+
+        const url = "{% url 'biru:beli_voucher' %}";
+        // const kodevoucher = document.querySelector('.beli-voucher[data-kode-voucher]').getAttribute('data-kode-voucher');
+        // const hargavoucher = document.querySelector('.beli-voucher[data-harga-voucher]').getAttribute('data-harga-voucher');
+        const kodevoucher = document.getElementById('kodeDiskon').value;
+        const hargavoucher = document.getElementById('hargaDiskon').value;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                kode_voucher: kodevoucher,
+                harga_voucher: hargavoucher,
+                payment_method: paymentMethod
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle success (e.g., show success message, redirect)
+            if (data['buy_status'])
+            showSuccessModal(data['voucher'])
+                // alert('Pembelian voucher berhasil');
+            else
+                showFailureModal("no money");
+            document.getElementById('voucherModal').classList.add('hidden');
+        })
+        .catch(error => {
+            // Handle error
+            console.error('Error:', error);
+            alert('Terjadi kesalahan dalam pembelian voucher');
+        });
+    });
+    document.getElementById('closeSuccessModal').addEventListener('click', function() {
+        document.getElementById('successModal').classList.add('hidden');
+    });
+    // Close failure modal functionality
+    document.getElementById('closeFailureModal').addEventListener('click', function() {
+        document.getElementById('failureModal').classList.add('hidden');
     });
 </script>
 {% endblock content %}
