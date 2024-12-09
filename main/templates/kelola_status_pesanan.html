@@ -6,8 +6,8 @@
         <div class="flex space-x-4">
             <select name="status_pesanan" id="status_pesanan" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Semua Status</option>
-                {% for status in status_list %}
-                <option value="{{ status.1 }}">{{ status.1 }}</option>
+                {% for status in status_choices %}
+                <option value="{{ status.0 }}">{{ status.1 }}</option>
                 {% endfor %}
             </select>
 
@@ -27,27 +27,7 @@
             <p>Memuat data...</p>
         </div>
 
-        <div id="queryResult" class="space-y-4 mt-4">
-            {% for pesanan in pesanan_list %}
-            <div class="bg-gray-100 p-4 rounded-md shadow-sm space-y-2">
-                <p class="text-gray-700"><span class="font-semibold">Subkategori Jasa:</span> {{ pesanan.1 }}</p>
-                <p class="text-gray-700"><span class="font-semibold">Sesi Layanan:</span> {{ pesanan.2 }}</p>
-                <p class="text-gray-700"><span class="font-semibold">Harga:</span> {{ pesanan.3 }}</p>
-                <p class="text-gray-700"><span class="font-semibold">Nama Pekerja:</span> {{ pesanan.4 }}</p>
-                <p class="text-gray-700"><span class="font-semibold">Status:</span> {{ pesanan.5 }}</p>
-                <div>
-                    {% if pesanan.5 == "Menunggu Pembayaran" or pesanan.5 == "Mencari Pekerja Terdekat" %}
-                    <form method="POST" action="{% url 'cancel_pesanan' pesanan.0 %}">
-                        {% csrf_token %}
-                        <button type="submit" class="inline-block bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 ease-in-out">Batalkan</button>
-                    </form>
-                    {% elif pesanan.5 == "Pesanan Selesai" or pesanan.5 == "Pekerjaan Selesai" %}
-                    <a href="{% url 'create_testimoni' pesanan.0 %}" class="inline-block bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-300 ease-in-out">Buat Testimoni</a>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+        <div id="queryResult" class="space-y-4 mt-4"></div>
     </div>
 </div>
 
@@ -60,10 +40,6 @@
 
     searchButton.addEventListener('click', search_pesanan);
     
-    // filters when value changes
-    selectStatus.addEventListener('change', search_pesanan);
-    selectSubkategori.addEventListener('change', search_pesanan);
-
     function search_pesanan(){
         const status = selectStatus.value;
         const subkategori = selectSubkategori.value;
@@ -110,7 +86,7 @@
                             <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                             <button type="submit" class="inline-block bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-300 ease-in-out">Batalkan</button>
                         </form>
-                        ` : element[5] === "Pesanan Selesai" || element[5] === "Pekerjaan Selesai" && element[5] !== "Ulasan Diberikan" ? `
+                        ` : element[5] === "Pekerjaan Selesai" && element[5] !== "Ulasan Diberikan" ? `
                         <a href="/create_testimoni/${element[0]}/" class="inline-block bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-300 ease-in-out">Buat Testimoni</a>
                         ` : ''}
                     </div>

@@ -467,7 +467,7 @@ def view_pemesanan_jasa(request):
                         on 
                             kkj.kategorijasaid = kj.id
                         where 
-                            ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
+                            ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9' or ps.idstatus = '5b5a0ce2-5c7f-4b9b-8c1e-1e2a11b3e3c3'
                             and kkj.pekerjaid = %s
                         ''',[user[0]]
                     )
@@ -577,8 +577,7 @@ def get_pemesanan(request):
                     pkj.kategorijasaid = kj.id
                 where 
                     ps.idstatus = 'a7c7a58e-197b-4e25-a7c1-9fda1e0d60a9'
-                    and pkj.pekerjaid = %s
-                ''', [user[0]]
+                '''
             )
             result = cursor.fetchall()
         else:
@@ -998,53 +997,61 @@ def kelola_status_pesanan(request, user_id):
     if not user or str(user[0]) != str(user_id):
         return redirect('login')
 
-    # Fetch subcategories for the filter
     with connection.cursor() as cursor:
+        # Fetch status choices
+        cursor.execute("""
+            SELECT id, status 
+            FROM public.status_pesanan 
+            ORDER BY CASE status
+                WHEN 'Menunggu Pembayaran' THEN 1
+                WHEN 'Pembayaran Dikonfirmasi' THEN 2
+                WHEN 'Mencari Pekerja Terdekat' THEN 3
+                WHEN 'Pekerja Sedang Menuju Lokasi' THEN 4
+                WHEN 'Pekerjaan Sedang Dilaksanakan' THEN 5
+                WHEN 'Pekerjaan Selesai' THEN 6
+                WHEN 'Ulasan Diberikan' THEN 7
+            END
+        """)
+        status_choices = cursor.fetchall()
+
+        # Fetch subcategories
         cursor.execute("""
             SELECT id, namasubkategori
             FROM public.subkategori_jasa
         """)
         subkategori_list = cursor.fetchall()
 
-    # Fetch orders for the user that are currently in progress
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT pj.id, skj.namasubkategori, sl.sesi, pj.totalbiaya, u.nama, sp.status
-            FROM public.tr_pemesanan_jasa pj
-            JOIN (
-                SELECT DISTINCT ON (idtrpemesanan) idtrpemesanan, idstatus
-                FROM public.tr_pemesanan_status
-                ORDER BY idtrpemesanan, tglwaktu DESC
-            ) ps ON pj.id = ps.idtrpemesanan
-            JOIN public.status_pesanan sp ON ps.idstatus = sp.id
-            JOIN public.subkategori_jasa skj ON pj.idkategorijasa = skj.id
-            JOIN public.sesi_layanan sl ON skj.id = sl.subkategoriid
-            LEFT JOIN public.pekerja p ON pj.idpekerja = p.id
-            LEFT JOIN public.user u ON p.id = u.id
-            WHERE pj.idpelanggan = %s AND sp.status IN ('Menunggu Pembayaran', 'Mencari Pekerja Terdekat')
-        """, [user_id])
-        pesanan_list = cursor.fetchall()
-
     context = {
-        'pesanan_list': pesanan_list,
-        'subkategori_list': subkategori_list,
         'logged_in': True,
         'user': user,
-        'is_pelanggan': is_pelanggan(user[0])
+        'is_pelanggan': is_pelanggan(user[0]),
+        'status_choices': status_choices,
+        'subkategori_list': subkategori_list
     }
-    return render(request, 'kelola_status_pesanan.html', context)
 
+    return render(request, 'kelola_status_pesanan.html', context)
 def cancel_pesanan(request, id):
     user = get_user(request.session['sessionId'])
     if not user:
         return redirect('login')
 
     with connection.cursor() as cursor:
-        cursor.execute("""
-            DELETE FROM public.tr_pemesanan_jasa WHERE id = %s AND idpelanggan = %s
-        """, [id, user[0]])
+        try:
+            cursor.execute("BEGIN")
+            # Delete related records from tr_pemesanan_status
+            cursor.execute("""
+                DELETE FROM public.tr_pemesanan_status WHERE idtrpemesanan = %s
+            """, [id])
+            # Delete the order from tr_pemesanan_jasa
+            cursor.execute("""
+                DELETE FROM public.tr_pemesanan_jasa WHERE id = %s AND idpelanggan = %s
+            """, [id, user[0]])
+            cursor.execute("COMMIT")
+            messages.success(request, 'Pesanan berhasil dibatalkan')
+        except Exception as e:
+            cursor.execute("ROLLBACK")
+            messages.error(request, f'Gagal membatalkan pesanan: {str(e)}')
 
-    messages.success(request, 'Pesanan berhasil dibatalkan')
     return redirect('kelola_status_pesanan', user_id=user[0])
 
 def create_testimoni(request, id):
@@ -1111,12 +1118,13 @@ def create_testimoni(request, id):
                 print(f"Error creating testimoni: {str(e)}")  # Debug log
                 messages.error(request, 'Gagal membuat testimoni')
                 return redirect('kelola_status_pesanan', user_id=user[0])
+            
 def get_filtered_pesanan(request):
     user = get_user(request.session['sessionId'])
     if not user:
         return redirect('login')
     
-    status = request.GET.get('status', '').strip()
+    status_id = request.GET.get('status', '').strip()
     subkategori = request.GET.get('subkategori', '').strip()
 
     with connection.cursor() as cursor:
@@ -1137,9 +1145,9 @@ def get_filtered_pesanan(request):
         '''
         params = [user[0]]
 
-        if status:
-            query += ' AND sp.status = %s'
-            params.append(status)
+        if status_id:
+            query += ' AND ps.idstatus = %s'
+            params.append(status_id)
 
         if subkategori:
             query += ' AND skj.id = %s'
@@ -1148,11 +1156,27 @@ def get_filtered_pesanan(request):
         cursor.execute(query, params)
         result = cursor.fetchall()
 
+        # pilihan
+        cursor.execute("""
+            SELECT id, status 
+            FROM public.status_pesanan 
+            ORDER BY CASE status
+                WHEN 'Menunggu Pembayaran' THEN 1
+                WHEN 'Pembayaran Dikonfirmasi' THEN 2
+                WHEN 'Mencari Pekerja Terdekat' THEN 3
+                WHEN 'Pekerja Sedang Menuju Lokasi' THEN 4
+                WHEN 'Pekerjaan Sedang Dilaksanakan' THEN 5
+                WHEN 'Pekerjaan Selesai' THEN 6
+                WHEN 'Ulasan Diberikan' THEN 7
+            END
+        """)
+        status_choices = cursor.fetchall()
+
     return JsonResponse({
         'status': 'success',
-        'data': result
+        'data': result,
+        'status_choices': status_choices
     }, safe=False)
-
 
 def edit_profile(request, user_id):
     # Verify user
